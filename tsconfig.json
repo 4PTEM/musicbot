@@ -6,7 +6,8 @@
         "outDir": "out",
         "sourceMap": true,
         "alwaysStrict": true,
-        "esModuleInterop": true
+        "esModuleInterop": true,
+        "incremental": true
     },
     "exclude": [
         "out",

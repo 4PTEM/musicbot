@@ -6,7 +6,7 @@
   "scripts": {
     "compile": "tsc",
     "dev": "nodemon --exec ts-node ./src/main.ts",
-    "start": "node ./out/src/main.js"
+    "start": "node ./out/main.js"
   },
   "repository": {
     "type": "git",
@@ -22,6 +22,7 @@
     "@discordjs/voice": "^0.9.0",
     "discord.js": "^13.7.0",
     "dotenv": "^16.0.1",
+    "moment": "^2.29.3",
     "node-fetch": "^2.6.7",
     "tweetnacl": "^1.0.3",
     "youtube-dl-exec": "^2.0.12",
