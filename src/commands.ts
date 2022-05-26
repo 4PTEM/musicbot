@@ -9,13 +9,16 @@ import { MusicQueueManager } from './music/musicQueueManager';
 const adapter = new Adapter();
 const musicQueueManager = new MusicQueueManager();
 const API_KEYS = process.env.API_KEYS?.split(' ');
-const CURRENT_KEY_INDEX = 0
+let CURRENT_KEY_INDEX = 0;
+refreshApiKey();
 function refreshApiKey() {
     if (!API_KEYS) {
-        console.log('[ERROR] no api keys provided');
+        console.log('(API KEYS)[ERROR] no api keys provided');
         return;
     }
-    process.env.API_KEY = API_KEYS[CURRENT_KEY_INDEX + 1 % API_KEYS.length];
+    CURRENT_KEY_INDEX = (CURRENT_KEY_INDEX + 1) % API_KEYS.length;
+    console.log(`(API KEYS)[INFO] Refreshed API keys old API_KEY: ${process.env.API_KEY}; new API_KEY: ${API_KEYS[CURRENT_KEY_INDEX]}`)
+    process.env.API_KEY = API_KEYS[CURRENT_KEY_INDEX];
 }
 
 const commands: Command[] = [
@@ -63,8 +66,6 @@ const commands: Command[] = [
             return;
         }
 
-        const clientUser = guild.members.cache.get(client.user!.id)!;
-
         const usersToKick = mentions.members;
         if (!usersToKick) {
             message.channel.send('Please mention the users you want to kick out');
@@ -100,7 +101,7 @@ const commands: Command[] = [
         for (let i = offset; i < count; i++) {
             channel.messages.delete(mesages.at(i)!)
         }
-    }),
+    })
 ];
 
 export { commands };

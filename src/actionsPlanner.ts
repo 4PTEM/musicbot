@@ -23,7 +23,7 @@ export class EveryDayAction implements PlannedAction {
 
     process(): void {
         if (moment().format(this.timeformat) == this.time) {
-            console.log(`executing everyday action time: ${this.time}`)
+            console.log(`(ACTIONS)[INFO]executing everyday action time: ${this.time}`)
             this.execute();
         }
     }

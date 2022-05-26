@@ -82,7 +82,7 @@ export class MusicQueue {
 
         this.audioPlayer.on(AudioPlayerStatus.Idle, (oldState, newState) => {
             if (oldState.status === AudioPlayerStatus.Playing && newState.status === AudioPlayerStatus.Idle) {
-                console.log(`played track ${this.currentTrack?.link} in queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`)
+                console.log(`(MUSIC)[INFO]played track ${this.currentTrack?.link} in queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`)
                 this.currentTrack = undefined;
                 this.processQueue();
             }
@@ -93,7 +93,7 @@ export class MusicQueue {
 
     public enqueue(track: string) {
         this.tracks.push(track);
-        console.log(`enqueued track ${track} to queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`);
+        console.log(`(MUSIC)[INFO]enqueued track ${track} to queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`);
         this.processQueue();
     }
 
@@ -111,7 +111,7 @@ export class MusicQueue {
             this.audioPlayer.play(audioResource);
             this.queueLock = false;
         } catch (error: any) {
-            console.log(error.message)
+            console.log('(MUSIC)[ERROR]\n' + error.message)
             this.queueLock = false;
             return this.processQueue();
         }
