@@ -1,5 +1,5 @@
 import { createAudioPlayer } from '@discordjs/voice';
-import { Message, Permissions } from 'discord.js';
+import { ContextMenuInteraction, Message, Permissions } from 'discord.js';
 import fetch from 'node-fetch';
 import { Adapter } from './adapter';
 import { client } from './client';
@@ -64,6 +64,7 @@ const commands: Command[] = [
         for (const [id, kickableUser] of usersToKick) {
             if(!kickableUser.kickable) {
                 message.channel.send(`User ${kickableUser.nickname || kickableUser.user.username} cannot be kicked`);
+                continue;
             }
             guild.members.kick(kickableUser);
             message.channel.send(`${kickableUser.nickname || kickableUser.user.username} has been FOKIN KICKED FROM THIS SERVER`);
