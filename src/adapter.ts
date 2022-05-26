@@ -16,8 +16,11 @@ function getParamsString(params: Record<string, any>) {
 
 export class Adapter {
     async parseTracksFromYandexLink(link: string): Promise<string[]> {
-        const owner = 'kukaraches48';
-        const playlist_id = '3';
+        const linkregex = /^https\:\/\/music\.yandex\.ru\/users\/([^\/]*)\/playlists\/([0-9]*)$/;
+        if(!linkregex.test(link)) return [];
+        const match = [...link.match(linkregex)!];
+        const owner = match[1];
+        const playlist_id = match[2];
         let params = { owner, kinds: playlist_id };
         let paramsString = getParamsString(params);
         let tracks = (await (await fetch(`https://music.yandex.ru/handlers/playlist.jsx${paramsString}`, {
