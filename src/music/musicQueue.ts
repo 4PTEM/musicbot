@@ -76,10 +76,7 @@ export class MusicQueue {
         });
 
         this.audioPlayer.on('error', (error) => {
-            console.debug(error);
-            console.log(this.currentTrack);
             if (!this.currentTrack) return;
-            console.log(error.resource.playbackDuration / 1000)
             this.audioPlayer.play(this.currentTrack.createAudioResource(error.resource.playbackDuration));
         });
         this.audioPlayer.on(AudioPlayerStatus.Idle, (oldState, newState) => {
@@ -93,6 +90,7 @@ export class MusicQueue {
 
     public enqueue(track: string) {
         this.tracks.push(track);
+        console.log(`enqueued track ${track} to queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`);
         this.processQueue();
     }
 
