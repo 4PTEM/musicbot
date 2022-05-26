@@ -29,6 +29,6 @@ export class Handler {
             message.channel.send({content: 'command not found'});
             return;
         }
-        command.execute(argsString, message);
+        command.execute(argsString.trim(), message);
     }
 }

@@ -86,18 +86,18 @@ const commands: Command[] = [
     }),
     new Command('rm_messages', async (argsString, message) => {
         const { channel } = message;
-        const mesages = await channel.messages.fetch();
-        const offsetRegex = /offset\=([0-9]*)/;
-        const countRegex = /count\=([0-9]*)/;
-        let count = 1;
-        let offset = 0;
-        if (offsetRegex.test(argsString)) offset = Number([...argsString.match(offsetRegex)!][1])
-        if (countRegex.test(argsString)) count = Number([...argsString.match(countRegex)!][1])
-
-        if (offset + count > mesages.size) count = mesages.size - offset;
-        for (let i = offset; i < count; i++) {
-            channel.messages.delete(mesages.at(i)!)
+        const messages = await channel.messages.fetch();
+        const args = argsString.split(' ');
+        let count = Number(args[0]) || 1;
+        let offset = Number(args[1]) || 0;
+        if (offset + count > messages.size) count = messages.size - offset;
+        for (let i = offset; i < count + offset; i++) {
+            await channel.messages.delete(messages.at(i)!)
         }
+    }),
+    new Command('repeat_message', async (argsString, message) => {
+        const { channel } = message;
+        channel.send(' ')
     })
 ];
 
