@@ -76,7 +76,9 @@ export class MusicQueue {
         });
 
         this.audioPlayer.on('error', (error) => {
+            console.log(`(MUSIC)[ERROR] Audioplayer error: ${error}`);
             if (!this.currentTrack) return;
+            console.log(`(MUSIC)[INFO] Tryng to replay track ${this.currentTrack.link}`);
             this.audioPlayer.play(this.currentTrack.createAudioResource(error.resource.playbackDuration));
         });
 
