@@ -8,6 +8,15 @@ import { MusicQueueManager } from './music/musicQueueManager';
 
 const adapter = new Adapter();
 const musicQueueManager = new MusicQueueManager();
+const API_KEYS = process.env.API_KEYS?.split(' ');
+const CURRENT_KEY_INDEX = 0
+function refreshApiKey() {
+    if (!API_KEYS) {
+        console.log('[ERROR] no api keys provided');
+        return;
+    }
+    process.env.API_KEY = API_KEYS[CURRENT_KEY_INDEX + 1 % API_KEYS.length];
+}
 
 const commands: Command[] = [
     new Command('play', async (argsString: string, message: Message) => {
@@ -32,14 +41,21 @@ const commands: Command[] = [
 
         for (const track of tracks) {
             const queryParams = `part=id&maxResults=1&q=${encodeURI(track)}&key=${process.env.API_KEY}`;
-            const youtubeSearchResult = await (await fetch(`https://www.googleapis.com/youtube/v3/search?${queryParams}`)).json();
+            let youtubeSearchResult;
+            try {
+                youtubeSearchResult = await (await fetch(`https://www.googleapis.com/youtube/v3/search?${queryParams}`)).json();
+            } catch (e) {
+                refreshApiKey()
+                youtubeSearchResult = await (await fetch(`https://www.googleapis.com/youtube/v3/search?${queryParams}`)).json();
+            }
+
             if (!youtubeSearchResult) continue;
             const videoId = youtubeSearchResult?.items[0]?.id?.videoId;
             if (!videoId) continue;
             musicQueue?.enqueue(videoId);
         }
     }),
-    new Command('fokinkick', async (argsString, message) => {
+    new Command('kick', async (argsString, message) => {
         const { guild, author, mentions } = message;
 
         if (!guild) {
@@ -62,14 +78,29 @@ const commands: Command[] = [
         }
 
         for (const [id, kickableUser] of usersToKick) {
-            if(!kickableUser.kickable) {
+            if (!kickableUser.kickable) {
                 message.channel.send(`User ${kickableUser.nickname || kickableUser.user.username} cannot be kicked`);
                 continue;
             }
             guild.members.kick(kickableUser);
-            message.channel.send(`${kickableUser.nickname || kickableUser.user.username} has been FOKIN KICKED FROM THIS SERVER`);
+            message.channel.send(`${kickableUser.nickname || kickableUser.user.username} has been kicked from ${guild.name}`);
         }
-    })
+    }),
+    new Command('rm_messages', async (argsString, message) => {
+        const { channel } = message;
+        const mesages = await channel.messages.fetch();
+        const offsetRegex = /offset\=([0-9]*)/;
+        const countRegex = /count\=([0-9]*)/;
+        let count = 1;
+        let offset = 0;
+        if (offsetRegex.test(argsString)) offset = Number([...argsString.match(offsetRegex)!][1])
+        if (countRegex.test(argsString)) count = Number([...argsString.match(countRegex)!][1])
+
+        if (offset + count > mesages.size) count = mesages.size - offset;
+        for (let i = offset; i < count; i++) {
+            channel.messages.delete(mesages.at(i)!)
+        }
+    }),
 ];
 
 export { commands };

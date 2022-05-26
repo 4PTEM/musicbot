@@ -79,6 +79,7 @@ export class MusicQueue {
             if (!this.currentTrack) return;
             this.audioPlayer.play(this.currentTrack.createAudioResource(error.resource.playbackDuration));
         });
+
         this.audioPlayer.on(AudioPlayerStatus.Idle, (oldState, newState) => {
             if (oldState.status === AudioPlayerStatus.Playing && newState.status === AudioPlayerStatus.Idle) {
                 console.log(`played track ${this.currentTrack?.link} in queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`)
