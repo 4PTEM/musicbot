@@ -2,7 +2,7 @@ import { TextChannel } from 'discord.js'
 import { Handler } from './handler';
 import { client } from './client';
 import { commands } from './commands';
-import { BOT_TOKEN } from './config';
+import 'dotenv/config';
 
 const handler = new Handler(client, commands);
 
@@ -16,4 +16,4 @@ client.on('messageCreate', async message => {
     }
 });
 
-client.login(BOT_TOKEN);
+client.login(process.env.BOT_TOKEN);
