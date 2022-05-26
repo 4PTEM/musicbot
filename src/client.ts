@@ -9,7 +9,6 @@ client.on('ready', async () => {
     if (!client.user) throw new Error('authentication error');
     console.log(`Logged in as ${client.user.tag}!`);
     const actionsPlanner = new ActionsPlanner();
-    const time = moment(new Date(new Date().getTime() + 2000)).format('HH:mm:ss');
     actionsPlanner.addAction(new EveryDayAction('07:00:00', async () => {
         const sashachat = await client.users.createDM('678313025161396245');
         const photo = new MessageAttachment(fs.readFileSync('./images/goodMorningSasha.jpg'), 'good_morning.jpg');

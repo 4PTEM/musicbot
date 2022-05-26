@@ -8,6 +8,7 @@ const handler = new Handler(client, commands);
 
 
 client.on('messageCreate', async message => {
+    if(!client.user) throw new Error('No client user');
     const { content, channel } = message;
     if (!channel.isText() || !(channel instanceof TextChannel)) return;
     if (content.startsWith('+')) {

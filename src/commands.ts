@@ -2,6 +2,7 @@ import { createAudioPlayer } from '@discordjs/voice';
 import { Message, Permissions } from 'discord.js';
 import fetch from 'node-fetch';
 import { Adapter } from './adapter';
+import { client } from './client';
 import { Command } from './handler';
 import { MusicQueue } from './music/musicQueue';
 import { MusicQueueManager } from './music/musicQueueManager';
@@ -40,21 +41,32 @@ const commands: Command[] = [
     }),
     new Command('fokinkick', async (argsString, message) => {
         const { guild, author, mentions } = message;
-        if(!guild) {
+
+        if (!guild) {
             message.channel.send('Command availible only in guilds');
             return;
         }
+
+        const clientUser = guild.members.cache.get(client.user!.id)!;
+
         const usersToKick = mentions.members;
-        if(!usersToKick) {
+        if (!usersToKick) {
             message.channel.send('Please mention the users you want to kick out');
             return;
         }
+
         const user = guild.members.cache.get(author.id)!;
-        console.log(user.permissions.has(Permissions.FLAGS.KICK_MEMBERS));
-        if(user.permissions.has(Permissions.FLAGS.KICK_MEMBERS)) {
-            for(const [id, kickableUser] of usersToKick) {
-                guild.members.kick(kickableUser);
-            }       
+        if (!user.permissions.has(Permissions.FLAGS.KICK_MEMBERS)) {
+            message.channel.send(`You have no permissions`);
+            return;
+        }
+
+        for (const [id, kickableUser] of usersToKick) {
+            if(!kickableUser.kickable) {
+                message.channel.send(`User ${kickableUser.nickname || kickableUser.user.username} cannot be kicked`);
+            }
+            guild.members.kick(kickableUser);
+            message.channel.send(`${kickableUser.nickname || kickableUser.user.username} has been FOKIN KICKED FROM THIS SERVER`);
         }
     })
 ];
