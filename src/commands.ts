@@ -44,14 +44,11 @@ const commands: Command[] = [
 
         for (const track of tracks) {
             const queryParams = `part=id&maxResults=1&q=${encodeURI(track)}&key=${process.env.API_KEY}`;
-            let youtubeSearchResult;
-            try {
-                youtubeSearchResult = await (await fetch(`https://www.googleapis.com/youtube/v3/search?${queryParams}`)).json();
-            } catch (e) {
+            let youtubeSearchResult = await (await fetch(`https://www.googleapis.com/youtube/v3/search?${queryParams}`)).json();
+            if (youtubeSearchResult?.error?.code === 403) {
                 refreshApiKey()
                 youtubeSearchResult = await (await fetch(`https://www.googleapis.com/youtube/v3/search?${queryParams}`)).json();
             }
-
             if (!youtubeSearchResult) continue;
             const videoId = youtubeSearchResult?.items[0]?.id?.videoId;
             if (!videoId) continue;
