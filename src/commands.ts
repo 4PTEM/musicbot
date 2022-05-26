@@ -1,5 +1,4 @@
-import { createAudioPlayer } from '@discordjs/voice';
-import { ContextMenuInteraction, Message, Permissions } from 'discord.js';
+import { Message, Permissions } from 'discord.js';
 import fetch from 'node-fetch';
 import { Adapter } from './adapter';
 import { client } from './client';
@@ -30,8 +29,10 @@ const commands: Command[] = [
         if (!musicQueue) {
             musicQueue = musicQueueManager.set(String(voiceChannel.id), new MusicQueue(voiceChannel))
         }
+
         for (const track of tracks) {
-            const youtubeSearchResult = await (await fetch(`https://www.googleapis.com/youtube/v3/search?part=id&key=${process.env.API_KEY}&q=${encodeURI(track)}`)).json();
+            const queryParams = `part=id&maxResults=1&q=${encodeURI(track)}&key=${process.env.API_KEY}`;
+            const youtubeSearchResult = await (await fetch(`https://www.googleapis.com/youtube/v3/search?${queryParams}`)).json();
             if (!youtubeSearchResult) continue;
             const videoId = youtubeSearchResult?.items[0]?.id?.videoId;
             if (!videoId) continue;
@@ -73,3 +74,4 @@ const commands: Command[] = [
 ];
 
 export { commands };
+
