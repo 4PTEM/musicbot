@@ -8,7 +8,6 @@ const handler = new Handler(client, commands);
 
 
 client.on('messageCreate', async message => {
-    console.log(message.attachments);
     const { content, channel } = message;
     if (!channel.isText() || !(channel instanceof TextChannel)) return;
     if (content.startsWith('+')) {
