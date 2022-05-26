@@ -13,7 +13,7 @@ const commands: Command[] = [
     new Command('play', async (argsString: string, message: Message) => {
         const tracks: string[] = await adapter.parse(argsString);
 
-        if (tracks.length > 300) {
+        if (tracks.length > 30) {
             message.channel.send('Playlist is too long');
         }
         if (!message.guild) {
@@ -37,7 +37,6 @@ const commands: Command[] = [
             const videoId = youtubeSearchResult?.items[0]?.id?.videoId;
             if (!videoId) continue;
             musicQueue?.enqueue(videoId);
-            break;
         }
     }),
     new Command('fokinkick', async (argsString, message) => {
