@@ -15,11 +15,15 @@ function getParamsString(params: Record<string, any>) {
     return paramsString.substring(0, paramsString.length - 1)
 }
 
-export class Adapter {
-    private async parseTracksFromYandexLink(link: string): Promise<BaseTrack[]> {
+export interface BasePlatformAdapter {
+    parse(argsString: string): (Promise<BaseTrack[]> | Track[]);
+}
+
+export class YandexAdapter implements BasePlatformAdapter {
+    async parse(argsString: string): Promise<BaseTrack[]> {
         const linkregex = /^https\:\/\/music\.yandex\.ru\/users\/([^\/]*)\/playlists\/([0-9]*)$/;
-        if(!linkregex.test(link)) return [];
-        const match = [...link.match(linkregex)!];
+        if (!linkregex.test(argsString)) return [];
+        const match = [...argsString.match(linkregex)!];
         const owner = match[1];
         const playlist_id = match[2];
         let params = { owner, kinds: playlist_id };
@@ -40,21 +44,35 @@ export class Adapter {
         });
         return tracks;
     }
+}
 
-    private parseTracksFromYouTube(argsString: string): BaseTrack[] {
-        const linkregex = /https\:\/\/www\.youtube\.com\/watch\?v=[A-z0-9]{11}/;
-        if(linkregex.test(argsString)) {
+export class YouTubeAdapter implements BasePlatformAdapter {
+    parse(argsString: string): BaseTrack[] {
+        const linkregex = /^https:\/\/www\.youtube\.com\/watch\?v=[A-z0-9-_]{11}$/;
+        if (linkregex.test(argsString)) {
             return [new YoutubeTrack(argsString)];
         }
         return []
     }
+}
+
+export class Adapter {
+    adapters: Map<string, BasePlatformAdapter>;
+    constructor({ adapters }: Adapter) {
+        this.adapters = adapters;
+    }
 
     public async parse(argsString: string): Promise<BaseTrack[]> {
         if (argsString.startsWith('https://music.yandex.ru')) {
-            return (await this.parseTracksFromYandexLink(argsString));
+            return await this.adapters.get('yandex')!.parse(argsString);
         } else if (argsString.startsWith('https://www.youtube.com')) {
-            return (await this.parseTracksFromYouTube(argsString));
+            return await this.adapters.get('youtube')!.parse(argsString);
         }
         return [];
     }
 }
+
+export const adapters = new Map<string, BasePlatformAdapter>([
+    ['yandex', new YandexAdapter()],
+    ['youtube', new YouTubeAdapter()]
+])
