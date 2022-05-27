@@ -7,7 +7,7 @@ import fetch from 'node-fetch';
 const wait = promisify(setTimeout);
 
 const API_KEYS = process.env.API_KEYS?.split(' ');
-let CURRENT_KEY_INDEX = 0;
+let CURRENT_KEY_INDEX = -1;
 refreshApiKey();
 function refreshApiKey() {
     if (!API_KEYS) {
