@@ -15,7 +15,7 @@ export class Handler {
     client: Client;
     commands: Map<string, Command>;
     queueLock = false;
-    queue: {command: ((argsString: string, message: Message) => void), argsString: string, message: Message}[] = [];
+    queue: { command: ((argsString: string, message: Message) => void), argsString: string, message: Message }[] = [];
 
     constructor(client: Client, commands: Command[]) {
         this.client = client;
@@ -27,7 +27,7 @@ export class Handler {
     }
 
     async processQueue(): Promise<void> {
-        if(this.queueLock || this.queue.length == 0) return;
+        if (this.queueLock || this.queue.length == 0) return;
 
         this.queueLock = true;
         const { command, argsString, message } = this.queue.shift()!;
@@ -41,6 +41,6 @@ export class Handler {
             message.channel.send({ content: 'command not found' });
             return;
         }
-        this.queue.push({command: command.execute, argsString, message});
+        this.queue.push({ command: command.execute, argsString, message });
     }
 }

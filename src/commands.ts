@@ -26,7 +26,7 @@ const commands: Command[] = [
         }
         let musicQueue = musicQueueManager.get(String(voiceChannel.id));
         if (!musicQueue) {
-            musicQueue = musicQueueManager.set(String(voiceChannel.id), new MusicQueue(voiceChannel))
+            musicQueue = musicQueueManager.set(String(voiceChannel.id), new MusicQueue(voiceChannel));
         }
 
         for (const track of tracks) {
@@ -45,7 +45,7 @@ const commands: Command[] = [
         }
         let musicQueue = musicQueueManager.get(String(voiceChannel.id));
         if (!musicQueue) {
-            musicQueue = musicQueueManager.set(String(voiceChannel.id), new MusicQueue(voiceChannel))
+            musicQueue = musicQueueManager.set(String(voiceChannel.id), new MusicQueue(voiceChannel));
         }
 
         let count = 1;
