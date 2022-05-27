@@ -2,21 +2,42 @@ import { AudioPlayer, AudioPlayerStatus, createAudioPlayer, createAudioResource,
 import { VoiceBasedChannel } from 'discord.js';
 import { promisify } from 'node:util';
 import ytdl from 'ytdl-core';
-//import * as ytdl from 'youtube-dl-exec';
-import * as fs from 'fs';
-import * as stream from 'stream';
-
+import fetch from 'node-fetch';
 
 const wait = promisify(setTimeout);
 
+const API_KEYS = process.env.API_KEYS?.split(' ');
+let CURRENT_KEY_INDEX = 0;
+refreshApiKey();
+function refreshApiKey() {
+    if (!API_KEYS) {
+        console.log('(API KEYS)[ERROR] no api keys provided');
+        return;
+    }
+    CURRENT_KEY_INDEX = (CURRENT_KEY_INDEX + 1);
+    if (CURRENT_KEY_INDEX >= API_KEYS.length) {
+        throw new Error('All API keys exceeded');
+    }
+    console.log(`(API KEYS)[INFO] Refreshed API keys old API_KEY: ${process.env.API_KEY}; new API_KEY: ${API_KEYS[CURRENT_KEY_INDEX]}`)
+    process.env.API_KEY = API_KEYS[CURRENT_KEY_INDEX];
+}
+
 class Track {
-    link: string
-    constructor(link: string) {
-        this.link = link
+    name: string
+
+    constructor(name: string) {
+        this.name = name;
     }
 
-    createAudioResource(start: number = 0): AudioResource {
-        const audioStream = ytdl(`https://www.youtube.com/watch?v=${this.link}`, {
+    public async createAudioResource(start: number = 0): Promise<AudioResource> {
+        const queryParams = `part=id&maxResults=1&q=${encodeURI(this.name)}`;
+        let youtubeSearchResult = await (await fetch(`https://www.googleapis.com/youtube/v3/search?${queryParams}&key=${process.env.API_KEY}`)).json();
+        while (youtubeSearchResult?.error?.code === 403) {
+            refreshApiKey();
+            youtubeSearchResult = await (await fetch(`https://www.googleapis.com/youtube/v3/search?${queryParams}&key=${process.env.API_KEY}`)).json();
+        }
+        const videoId = youtubeSearchResult?.items[0]?.id?.videoId;
+        const audioStream = ytdl(`https://www.youtube.com/watch?v=${videoId}`, {
             range: {
                 start: Math.round(start / 1000)
             },
@@ -75,20 +96,20 @@ export class MusicQueue {
             }
         });
 
-        this.audioPlayer.on('error', (error) => {
+        this.audioPlayer.on('error', async (error) => {
             console.log(`(MUSIC)[ERROR] Audioplayer error: ${error}`);
             if (!this.currentTrack) return;
-            console.log(`(MUSIC)[INFO] Tryng to replay track ${this.currentTrack.link}`);
-            this.audioPlayer.play(this.currentTrack.createAudioResource(error.resource.playbackDuration));
+            console.log(`(MUSIC)[INFO] Tryng to replay track ${this.currentTrack.name}`);
+            this.audioPlayer.play(await this.currentTrack.createAudioResource(error.resource.playbackDuration));
         });
 
         this.audioPlayer.on(AudioPlayerStatus.Idle, (oldState, newState) => {
             if (oldState.status === AudioPlayerStatus.Playing && newState.status === AudioPlayerStatus.Idle) {
-                console.log(`(MUSIC)[INFO]played track ${this.currentTrack?.link} in queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`)
+                console.log(`(MUSIC)[INFO]played track ${this.currentTrack?.name} in queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`)
                 this.currentTrack = undefined;
                 this.processQueue();
             }
-        })
+        });
 
         this.voiceConnection.subscribe(this.audioPlayer);
     }
@@ -96,6 +117,11 @@ export class MusicQueue {
     public enqueue(track: string) {
         this.tracks.push(track);
         console.log(`(MUSIC)[INFO]enqueued track ${track} to queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`);
+        this.processQueue();
+    }
+
+    public skipTrack() {
+        this.audioPlayer.stop();
         this.processQueue();
     }
 
@@ -109,7 +135,7 @@ export class MusicQueue {
         try {
             const track = new Track(nextTrackLink);
             this.currentTrack = track;
-            const audioResource = track.createAudioResource();
+            const audioResource = await track.createAudioResource();
             this.audioPlayer.play(audioResource);
             this.queueLock = false;
         } catch (error: any) {

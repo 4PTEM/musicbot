@@ -1,25 +1,11 @@
 import { Message, Permissions } from 'discord.js';
-import fetch from 'node-fetch';
 import { Adapter } from './adapter';
-import { client } from './client';
 import { Command } from './handler';
 import { MusicQueue } from './music/musicQueue';
 import { MusicQueueManager } from './music/musicQueueManager';
 
 const adapter = new Adapter();
 const musicQueueManager = new MusicQueueManager();
-const API_KEYS = process.env.API_KEYS?.split(' ');
-let CURRENT_KEY_INDEX = 0;
-refreshApiKey();
-function refreshApiKey() {
-    if (!API_KEYS) {
-        console.log('(API KEYS)[ERROR] no api keys provided');
-        return;
-    }
-    CURRENT_KEY_INDEX = (CURRENT_KEY_INDEX + 1) % API_KEYS.length;
-    console.log(`(API KEYS)[INFO] Refreshed API keys old API_KEY: ${process.env.API_KEY}; new API_KEY: ${API_KEYS[CURRENT_KEY_INDEX]}`)
-    process.env.API_KEY = API_KEYS[CURRENT_KEY_INDEX];
-}
 
 const commands: Command[] = [
     new Command('play', async (argsString: string, message: Message) => {
@@ -43,17 +29,25 @@ const commands: Command[] = [
         }
 
         for (const track of tracks) {
-            const queryParams = `part=id&maxResults=1&q=${encodeURI(track)}&key=${process.env.API_KEY}`;
-            let youtubeSearchResult = await (await fetch(`https://www.googleapis.com/youtube/v3/search?${queryParams}`)).json();
-            if (youtubeSearchResult?.error?.code === 403) {
-                refreshApiKey()
-                youtubeSearchResult = await (await fetch(`https://www.googleapis.com/youtube/v3/search?${queryParams}`)).json();
-            }
-            if (!youtubeSearchResult) continue;
-            const videoId = youtubeSearchResult?.items[0]?.id?.videoId;
-            if (!videoId) continue;
-            musicQueue?.enqueue(videoId);
+            musicQueue.enqueue(track);
         }
+    }),
+    new Command('skip', async (argsString: string, message: Message) => {
+        if (!message.guild) {
+            return;
+        }
+        const user = message.guild.members.cache.get(message.author.id)!;
+        const voiceChannel = user.voice.channel;
+        if (!voiceChannel) {
+            message.channel.send('You should be in a voice channel!');
+            return;
+        }
+        let musicQueue = musicQueueManager.get(String(voiceChannel.id));
+        if (!musicQueue) {
+            musicQueue = musicQueueManager.set(String(voiceChannel.id), new MusicQueue(voiceChannel))
+        }
+
+        musicQueue.skipTrack();
     }),
     new Command('kick', async (argsString, message) => {
         const { guild, author, mentions } = message;
