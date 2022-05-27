@@ -146,7 +146,6 @@ export class MusicQueue {
     }
 
     public stop() {
-        this.queueLock = true;
         this.tracks = [];
         this.audioPlayer.stop(true);
     }

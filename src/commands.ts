@@ -13,6 +13,7 @@ const commands: Command[] = [
 
         if (tracks.length > 100) {
             message.channel.send('Playlist is too long');
+            return;
         }
         if (!message.guild) {
             return;
@@ -48,6 +49,24 @@ const commands: Command[] = [
         }
 
         musicQueue.skipTrack();
+    }),
+    new Command('stop', async (argsString: string, message: Message) => {
+        if (!message.guild) {
+            return;
+        }
+        const user = message.guild.members.cache.get(message.author.id)!;
+        const voiceChannel = user.voice.channel;
+        if (!voiceChannel) {
+            message.channel.send('You should be in a voice channel!');
+            return;
+        }
+        let musicQueue = musicQueueManager.get(String(voiceChannel.id));
+        if (!musicQueue) {
+            message.channel.send('No tracks')
+            return;
+        }
+
+        musicQueue.stop();
     }),
     new Command('kick', async (argsString, message) => {
         const { guild, author, mentions } = message;
