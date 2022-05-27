@@ -1,10 +1,10 @@
 import { Message, Permissions } from 'discord.js';
-import { Adapter } from './adapter';
+import { Adapter, adapters } from './adapter';
 import { Command } from './handler';
 import { MusicQueue, BaseTrack } from './music/musicQueue';
 import { MusicQueueManager } from './music/musicQueueManager';
 
-const adapter = new Adapter();
+const adapter = new Adapter(adapters);
 const musicQueueManager = new MusicQueueManager();
 
 const commands: Command[] = [

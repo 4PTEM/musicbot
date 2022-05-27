@@ -58,18 +58,18 @@ export class YouTubeAdapter implements BasePlatformAdapter {
 
 export class Adapter {
     adapters: Map<string, BasePlatformAdapter>;
-    constructor({ adapters }: Adapter) {
+    constructor(adapters: Map<string, BasePlatformAdapter>) {
         this.adapters = adapters;
     }
 
     public async parse(argsString: string): Promise<BaseTrack[]> {
-        if (argsString.startsWith('https://music.yandex.ru')) {
-            return await this.adapters.get('yandex')!.parse(argsString);
-        } else if (argsString.startsWith('https://www.youtube.com')) {
-            return await this.adapters.get('youtube')!.parse(argsString);
-        }
-        return [];
+    if (argsString.startsWith('https://music.yandex.ru')) {
+        return await this.adapters.get('yandex')!.parse(argsString);
+    } else if (argsString.startsWith('https://www.youtube.com')) {
+        return await this.adapters.get('youtube')!.parse(argsString);
     }
+    return [];
+}
 }
 
 export const adapters = new Map<string, BasePlatformAdapter>([
