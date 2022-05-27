@@ -48,7 +48,11 @@ const commands: Command[] = [
             musicQueue = musicQueueManager.set(String(voiceChannel.id), new MusicQueue(voiceChannel))
         }
 
-        musicQueue.skipTrack();
+        let tracksToSkip = 1;
+        if (!isNaN(argsString as any)) tracksToSkip = Number(argsString);
+        for (let i = 0; i < tracksToSkip; i++) {
+            musicQueue.skipTrack();
+        }
     }),
     new Command('stop', async (argsString: string, message: Message) => {
         if (!message.guild) {
