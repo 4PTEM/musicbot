@@ -11,7 +11,7 @@ const commands: Command[] = [
     new Command('play', async (argsString: string, message: Message) => {
         const tracks: string[] = await adapter.parse(argsString);
 
-        if (tracks.length > 30) {
+        if (tracks.length > 100) {
             message.channel.send('Playlist is too long');
         }
         if (!message.guild) {
