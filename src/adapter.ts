@@ -23,6 +23,7 @@ export class Adapter {
         const playlist_id = match[2];
         let params = { owner, kinds: playlist_id };
         let paramsString = getParamsString(params);
+        paramsString += '&light=true&madeFor=&withLikesCount=true&forceLogin=true&lang=ru&external-domain=music.yandex.ru&overembed=false&ncrnd=0.4617229546606778'
         let tracks = (await (await fetch(`https://music.yandex.ru/handlers/playlist.jsx${paramsString}`, {
             headers: {
                 'Sec-Fetch-Dest': 'empty',
@@ -34,7 +35,7 @@ export class Adapter {
         })).json()).playlist.tracks;
         tracks = tracks.map((track: yandexTrack) => {
             let author = track.artists.map((artist) => artist.name).join(', ');
-            return track.title + ' - ' + author;
+            return author + ' - ' + track.title;
         });
         return tracks;
     }
