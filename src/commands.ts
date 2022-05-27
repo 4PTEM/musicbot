@@ -1,7 +1,7 @@
 import { Message, Permissions } from 'discord.js';
 import { Adapter } from './adapter';
 import { Command } from './handler';
-import { MusicQueue } from './music/musicQueue';
+import { MusicQueue, BaseTrack } from './music/musicQueue';
 import { MusicQueueManager } from './music/musicQueueManager';
 
 const adapter = new Adapter();
@@ -9,7 +9,7 @@ const musicQueueManager = new MusicQueueManager();
 
 const commands: Command[] = [
     new Command('play', async (argsString: string, message: Message) => {
-        const tracks: string[] = await adapter.parse(argsString);
+        const tracks: BaseTrack[] = await adapter.parse(argsString);
 
         if (tracks.length > 100) {
             message.channel.send('Playlist is too long');

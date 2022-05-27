@@ -1,4 +1,5 @@
 import fetch from 'node-fetch'
+import { BaseTrack, Track, YoutubeTrack } from './music/musicQueue';
 
 type yandexTrack = {
     artists: [{ name: string }],
@@ -15,7 +16,7 @@ function getParamsString(params: Record<string, any>) {
 }
 
 export class Adapter {
-    async parseTracksFromYandexLink(link: string): Promise<string[]> {
+    private async parseTracksFromYandexLink(link: string): Promise<BaseTrack[]> {
         const linkregex = /^https\:\/\/music\.yandex\.ru\/users\/([^\/]*)\/playlists\/([0-9]*)$/;
         if(!linkregex.test(link)) return [];
         const match = [...link.match(linkregex)!];
@@ -35,14 +36,24 @@ export class Adapter {
         })).json()).playlist.tracks;
         tracks = tracks.map((track: yandexTrack) => {
             let author = track.artists.map((artist) => artist.name).join(', ');
-            return author + ' - ' + track.title;
+            return new Track(author + ' - ' + track.title);
         });
         return tracks;
     }
 
-    async parse(argsString: string): Promise<string[]> {
+    private parseTracksFromYouTube(argsString: string): BaseTrack[] {
+        const linkregex = /https\:\/\/www\.youtube\.com\/watch\?v=[A-z0-9]{11}/;
+        if(linkregex.test(argsString)) {
+            return [new YoutubeTrack(argsString)];
+        }
+        return []
+    }
+
+    public async parse(argsString: string): Promise<BaseTrack[]> {
         if (argsString.startsWith('https://music.yandex.ru')) {
             return (await this.parseTracksFromYandexLink(argsString));
+        } else if (argsString.startsWith('https://www.youtube.com')) {
+            return (await this.parseTracksFromYouTube(argsString));
         }
         return [];
     }

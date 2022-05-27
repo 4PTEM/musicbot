@@ -22,7 +22,12 @@ function refreshApiKey() {
     process.env.API_KEY = API_KEYS[CURRENT_KEY_INDEX];
 }
 
-class Track {
+export interface BaseTrack {
+    name: string;
+    createAudioResource(start?: number): Promise<AudioResource>;
+}
+
+export class Track implements BaseTrack {
     name: string
 
     constructor(name: string) {
@@ -48,8 +53,27 @@ class Track {
     }
 }
 
+export class YoutubeTrack {
+    name: string
+
+    constructor(name: string) {
+        this.name = name;
+    }
+
+    public async createAudioResource(start: number = 0): Promise<AudioResource> {
+        const audioStream = ytdl(this.name, {
+            range: {
+                start: Math.round(start / 1000)
+            },
+            quality: 'highestaudio',
+            filter: 'audioonly'
+        });
+        return createAudioResource(audioStream);
+    }
+}
+
 export class MusicQueue {
-    tracks: string[];
+    tracks: BaseTrack[];
     voiceChannel: VoiceBasedChannel;
     audioPlayer: AudioPlayer;
     voiceConnection: VoiceConnection;
@@ -114,9 +138,9 @@ export class MusicQueue {
         this.voiceConnection.subscribe(this.audioPlayer);
     }
 
-    public enqueue(track: string) {
+    public enqueue(track: BaseTrack) {
         this.tracks.push(track);
-        console.log(`(MUSIC)[INFO]enqueued track ${track} to queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`);
+        console.log(`(MUSIC)[INFO]enqueued track ${track.name} to queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`);
         this.processQueue();
     }
 
@@ -135,9 +159,8 @@ export class MusicQueue {
         }
         this.queueLock = true;
 
-        const nextTrackLink = this.tracks.shift()!;
+        const track = this.tracks.shift()!;
         try {
-            const track = new Track(nextTrackLink);
             this.currentTrack = track;
             const audioResource = await track.createAudioResource();
             this.audioPlayer.play(audioResource);
