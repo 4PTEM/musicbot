@@ -33,8 +33,7 @@ export class Adapter {
             }
         })).json()).playlist.tracks;
         tracks = tracks.map((track: yandexTrack) => {
-            let author = '';
-            track.artists.forEach((artist: any) => author += artist.name + ', ');
+            let author = track.artists.map((artist) => artist.name).join(', ');
             return track.title + ' - ' + author;
         });
         return tracks;
