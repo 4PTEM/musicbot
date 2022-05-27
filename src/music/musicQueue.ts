@@ -120,8 +120,12 @@ export class MusicQueue {
         this.processQueue();
     }
 
-    public skipTrack() {
+    public skipTrack(count = 1) {
         this.audioPlayer.stop();
+        for (let i = 0; i < count - 1; i++) {
+            console.log(`(MUSIC)[INFO]Skipped ${count} tracks in queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`);
+            this.tracks.shift()
+        }
         this.processQueue();
     }
 

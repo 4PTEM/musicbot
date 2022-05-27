@@ -33,7 +33,7 @@ const commands: Command[] = [
             musicQueue.enqueue(track);
         }
     }),
-    new Command('skip', async (argsString: string, message: Message) => {
+    new Command('skip', (argsString: string, message: Message) => {
         if (!message.guild) {
             return;
         }
@@ -48,11 +48,9 @@ const commands: Command[] = [
             musicQueue = musicQueueManager.set(String(voiceChannel.id), new MusicQueue(voiceChannel))
         }
 
-        let tracksToSkip = 1;
-        if (!isNaN(argsString as any)) tracksToSkip = Number(argsString);
-        for (let i = 0; i < tracksToSkip; i++) {
-            musicQueue.skipTrack();
-        }
+        let count = 1;
+        if (!isNaN(Number(argsString))) count = Number(argsString);
+        musicQueue.skipTrack(count);
     }),
     new Command('stop', async (argsString: string, message: Message) => {
         if (!message.guild) {
