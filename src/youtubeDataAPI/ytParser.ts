@@ -28,7 +28,7 @@ type YTVideo = {
 };
 class YTParser {
     async searchVideo(name: string): Promise<YTVideo> {
-        const queryParams = `part=id&maxResults=${MAX_PLAYLIST_LENGTH + 1}&q=${encodeURI(name)}`;
+        const queryParams = `part=id&maxResults=0&q=${encodeURI(name)}`;
 
         let youtubeSearchResult = await (await fetch(`https://www.googleapis.com/youtube/v3/search?${queryParams}&key=${API_KEY}`)).json();
         while (youtubeSearchResult?.error?.code === 403) {
