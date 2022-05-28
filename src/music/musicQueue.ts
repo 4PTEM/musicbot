@@ -11,7 +11,7 @@ let CURRENT_KEY_INDEX = -1;
 refreshApiKey();
 function refreshApiKey() {
     if (!API_KEYS) {
-        console.log('(API KEYS)[ERROR] no api keys provided');
+        console.log('(API KEYS)[ERROR] No api keys provided');
         return;
     }
     CURRENT_KEY_INDEX = (CURRENT_KEY_INDEX + 1);
@@ -24,11 +24,13 @@ function refreshApiKey() {
 
 export interface BaseTrack {
     name: string;
+    triedToReplay: boolean;
     createAudioResource(start?: number): Promise<AudioResource>;
 }
 
 export class Track implements BaseTrack {
-    name: string
+    name: string;
+    triedToReplay = false;
 
     constructor(name: string) {
         this.name = name;
@@ -54,7 +56,8 @@ export class Track implements BaseTrack {
 }
 
 export class YoutubeTrack {
-    name: string
+    name: string;
+    triedToReplay = false;
 
     constructor(name: string) {
         this.name = name;
@@ -79,7 +82,7 @@ export class MusicQueue {
     voiceConnection: VoiceConnection;
     queueLock = false;
     readyLock = false;
-    currentTrack: Track | undefined;
+    currentTrack: BaseTrack | undefined;
 
     constructor(voiceChannel: VoiceBasedChannel) {
         this.tracks = [];
@@ -89,30 +92,44 @@ export class MusicQueue {
         //@ts-ignore
         this.voiceConnection = joinVoiceChannel({ channelId: this.voiceChannel.id, guildId: guild.id, adapterCreator: guild.voiceAdapterCreator });
 
-        this.voiceConnection.on(VoiceConnectionStatus.Signalling, async (_: VoiceConnectionState, newState: VoiceConnectionState) => {
-            if (newState.status === VoiceConnectionStatus.Disconnected) {
-                if (newState.reason === VoiceConnectionDisconnectReason.WebSocketClose && newState.closeCode === 4014) {
-                    try {
-                        await entersState(this.voiceConnection, VoiceConnectionStatus.Connecting, 5_000);
-                    } catch {
-                        this.voiceConnection.destroy();
-                    }
-                } else if (this.voiceConnection.rejoinAttempts < 5) {
-                    await wait((this.voiceConnection.rejoinAttempts + 1) * 5_000);
-                    this.voiceConnection.rejoin();
-                } else {
+        this.voiceConnection.on(VoiceConnectionStatus.Disconnected, async (oldState, newState) => {
+            if (newState.reason === VoiceConnectionDisconnectReason.WebSocketClose && newState.closeCode === 4014) {
+                try {
+                    await entersState(this.voiceConnection, VoiceConnectionStatus.Connecting, 5_000);
+                } catch {
                     this.voiceConnection.destroy();
                 }
-            } else if (newState.status === VoiceConnectionStatus.Destroyed) {
-                this.stop();
-            } else if (
-                !this.readyLock &&
-                (newState.status === VoiceConnectionStatus.Connecting || newState.status === VoiceConnectionStatus.Signalling)
-            ) {
+            } else if (this.voiceConnection.rejoinAttempts < 5) {
+                await wait((this.voiceConnection.rejoinAttempts + 1) * 5_000);
+                this.voiceConnection.rejoin();
+            } else {
+                this.voiceConnection.destroy();
+            }
+        });
+
+        this.voiceConnection.on(VoiceConnectionStatus.Destroyed, async (oldState, newState) => {
+            this.stop();
+        });
+
+        this.voiceConnection.on(VoiceConnectionStatus.Connecting, async (oldState, newState) => {
+            if (!this.readyLock) {
                 this.readyLock = true;
                 try {
                     await entersState(this.voiceConnection, VoiceConnectionStatus.Ready, 20_000);
-                } catch {
+                } catch (error: any) {
+                    if (this.voiceConnection.state.status !== VoiceConnectionStatus.Destroyed) this.voiceConnection.destroy();
+                } finally {
+                    this.readyLock = false;
+                }
+            }
+        });
+
+        this.voiceConnection.on(VoiceConnectionStatus.Connecting, async (oldState, newState) => {
+            if (!this.readyLock) {
+                this.readyLock = true;
+                try {
+                    await entersState(this.voiceConnection, VoiceConnectionStatus.Ready, 20_000);
+                } catch (error: any) {
                     if (this.voiceConnection.state.status !== VoiceConnectionStatus.Destroyed) this.voiceConnection.destroy();
                 } finally {
                     this.readyLock = false;
@@ -122,14 +139,15 @@ export class MusicQueue {
 
         this.audioPlayer.on('error', async (error) => {
             console.log(`(MUSIC)[ERROR] Audioplayer error: ${error}`);
-            if (!this.currentTrack) return;
+            if (!this.currentTrack || this.currentTrack.triedToReplay) return;
             console.log(`(MUSIC)[INFO] Tryng to replay track ${this.currentTrack.name}`);
             this.audioPlayer.play(await this.currentTrack.createAudioResource(error.resource.playbackDuration));
+            this.currentTrack.triedToReplay = true;
         });
 
         this.audioPlayer.on(AudioPlayerStatus.Idle, (oldState, newState) => {
-            if (oldState.status === AudioPlayerStatus.Playing && newState.status === AudioPlayerStatus.Idle) {
-                console.log(`(MUSIC)[INFO]played track ${this.currentTrack?.name} in queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`)
+            if (oldState.status === AudioPlayerStatus.Playing) {
+                console.log(`(MUSIC)[INFO] Played track ${this.currentTrack?.name} in queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`)
                 this.currentTrack = undefined;
                 this.processQueue();
             }
@@ -140,15 +158,16 @@ export class MusicQueue {
 
     public enqueue(track: BaseTrack) {
         this.tracks.push(track);
-        console.log(`(MUSIC)[INFO]enqueued track ${track.name} to queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`);
+        console.log(`(MUSIC)[INFO] Enqueued track ${track.name} to queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`);
         this.processQueue();
     }
 
     public skipTrack(count = 1) {
         this.audioPlayer.stop();
-        console.log(`(MUSIC)[INFO]Skipped ${count} tracks in queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`);
         for (let i = 0; i < count - 1; i++) {
-            this.tracks.shift()
+            if(this.tracks.length == 0) break;
+            this.currentTrack = this.tracks.shift()!;
+            console.log(`(MUSIC)[INFO] Skipped ${this.currentTrack.name} tracks in queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`);
         }
         this.processQueue();
     }
@@ -166,7 +185,7 @@ export class MusicQueue {
             this.audioPlayer.play(audioResource);
             this.queueLock = false;
         } catch (error: any) {
-            console.log('(MUSIC)[ERROR]\n' + error.message)
+            console.log('(MUSIC)[ERROR] ' + error.message)
             this.queueLock = false;
             return this.processQueue();
         }
