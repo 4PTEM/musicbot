@@ -26,4 +26,4 @@ client.on('messageCreate', async message => {
     handler.handleCommand(commandName, argsString, message);
 });
 
-client.login(process.env.BOT_TOKEN);
+client.login(BOT_TOKEN);
