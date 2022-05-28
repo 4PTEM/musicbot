@@ -1,4 +1,5 @@
 import fetch, { Response } from 'node-fetch';
+import { YANDEX_COOKIE } from './constants';
 import { BaseTrack, Track, YoutubeTrack } from './music/track';
 import { youTubeParser } from './youtubeDataAPI/ytParser';
 
@@ -46,7 +47,7 @@ export class YandexAdapter implements BasePlatformAdapter {
                 Accept: 'application / json, text/ javascript, */*; q=0.01',
                 'Accept-Encoding': 'gzip, deflate, br',
                 Connection: 'keep-alive',
-                Cookie: `${process.env.YANDEX_COOKIE || ''} active-browser-timestamp=${this.lastVisit};`,
+                Cookie: `${YANDEX_COOKIE || ''} active-browser-timestamp=${this.lastVisit};`,
                 Host: 'music.yandex.ru',
                 Referer: 'https://music.yandex.ru/users/kukaraches48/playlists/3',
                 'Sec-Fetch-Dest': 'empty',
@@ -86,7 +87,7 @@ export class YouTubeAdapter implements BasePlatformAdapter {
         const idregex = /list=([A-z0-9-_]{34})/;
         const id = [...link.match(idregex)!][1];
         const tracks = (await youTubeParser.getPlaylistItems(id)).map((video) => {
-            return new YoutubeTrack(`https://www.youtube.com/watch?v=${video.id.videoId}`);
+            return new YoutubeTrack(`https://www.youtube.com/watch?v=${video.id}`);
         });
         return tracks;
     }
