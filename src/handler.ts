@@ -19,9 +19,9 @@ export class Handler {
 
     constructor(client: Client, commands: Command[]) {
         this.client = client;
-        this.commands = new Map()
+        this.commands = new Map();
         for (const command of commands) {
-            this.commands.set(command.name, command)
+            this.commands.set(command.name, command);
         }
         setInterval(() => this.processQueue(), 300);
     }

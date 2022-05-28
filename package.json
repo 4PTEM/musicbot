@@ -6,7 +6,9 @@
   "scripts": {
     "compile": "tsc",
     "dev": "nodemon --exec ts-node ./src/main.ts",
-    "start": "node ./out/main.js"
+    "start": "node ./out/main.js",
+    "eslint": "eslint \"src/**/*.ts\"",
+    "eslint-fix": "eslint --fix \"src/**/*.ts\""
   },
   "repository": {
     "type": "git",
@@ -33,6 +35,9 @@
     "@types/node-fetch": "^2.6.1",
     "nodemon": "^2.0.15",
     "ts-node": "^10.7.0",
-    "typescript": "^4.7.2"
+    "typescript": "^4.7.2",
+    "@typescript-eslint/eslint-plugin": "^4.15.1",
+    "@typescript-eslint/parser": "^4.15.1",
+    "eslint": "^7.20.0"
   }
 }

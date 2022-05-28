@@ -64,7 +64,7 @@ const commands: Command[] = [
         }
         let musicQueue = musicQueueManager.get(String(voiceChannel.id));
         if (!musicQueue) {
-            message.channel.send('No tracks')
+            message.channel.send('No tracks');
             return;
         }
 
@@ -86,7 +86,7 @@ const commands: Command[] = [
 
         const user = guild.members.cache.get(author.id)!;
         if (!user.permissions.has(Permissions.FLAGS.KICK_MEMBERS)) {
-            message.channel.send(`You have no permissions`);
+            message.channel.send('You have no permissions');
             return;
         }
 
@@ -107,12 +107,12 @@ const commands: Command[] = [
         let offset = Number(args[1]) || 0;
         if (offset + count > messages.size) count = messages.size - offset;
         for (let i = offset; i < count + offset; i++) {
-            await channel.messages.delete(messages.at(i)!)
+            await channel.messages.delete(messages.at(i)!);
         }
     }),
     new Command('repeat_message', async (argsString, message) => {
         const { channel } = message;
-        channel.send(' ')
+        channel.send(' ');
     })
 ];
 

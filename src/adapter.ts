@@ -1,4 +1,4 @@
-import fetch, { Response } from 'node-fetch'
+import fetch, { Response } from 'node-fetch';
 import { BaseTrack, Track, YoutubeTrack } from './music/musicQueue';
 
 type yandexTrack = {
@@ -10,9 +10,9 @@ function getParamsString(params: Record<string, any>) {
     let paramsString = '?';
     const entries = Object.entries(params);
     entries.forEach(row => {
-        paramsString += `${row[0]}=${row[1]}&`
+        paramsString += `${row[0]}=${row[1]}&`;
     });
-    return paramsString.substring(0, paramsString.length - 1)
+    return paramsString.substring(0, paramsString.length - 1);
 }
 
 export interface BasePlatformAdapter {
@@ -23,14 +23,14 @@ export class YandexAdapter implements BasePlatformAdapter {
     private lastVisit = Date.now() / 1000
 
     async parse(argsString: string): Promise<BaseTrack[]> {
-        const linkregex = /^https\:\/\/music\.yandex\.ru\/users\/([^\/]*)\/playlists\/([0-9]*)$/;
+        const linkregex = /^https:\/\/music\.yandex\.ru\/users\/([^/]*)\/playlists\/([0-9]*)$/;
         if (!linkregex.test(argsString)) return [];
         const match = [...argsString.match(linkregex)!];
         const owner = match[1];
         const playlist_id = match[2];
         let params = { owner, kinds: playlist_id };
         let paramsString = getParamsString(params);
-        paramsString += '&light=true&madeFor=&withLikesCount=true&forceLogin=true&lang=ru&external-domain=music.yandex.ru&overembed=false&ncrnd=0.4617229546606778'
+        paramsString += '&light=true&madeFor=&withLikesCount=true&forceLogin=true&lang=ru&external-domain=music.yandex.ru&overembed=false&ncrnd=0.4617229546606778';
         let tracks = (await (await this.request(`https://music.yandex.ru/handlers/playlist.jsx${paramsString}`)).json()).playlist.tracks;
         tracks = tracks.map((track: yandexTrack) => {
             let author = track.artists.map((artist) => artist.name).join(', ');
@@ -60,7 +60,7 @@ export class YandexAdapter implements BasePlatformAdapter {
                 'sec-ch-ua-platform': '"Windows"',
             }
         });
-        this.lastVisit = Date.now() / 1000
+        this.lastVisit = Date.now() / 1000;
         return response;
     }
 }
@@ -71,7 +71,7 @@ export class YouTubeAdapter implements BasePlatformAdapter {
         if (linkregex.test(argsString)) {
             return [new YoutubeTrack(argsString)];
         }
-        return []
+        return [];
     }
 }
 

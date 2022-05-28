@@ -18,7 +18,7 @@ function refreshApiKey() {
     if (CURRENT_KEY_INDEX >= API_KEYS.length) {
         throw new Error('All API keys exceeded');
     }
-    console.log(`(API KEYS)[INFO] Refreshed API keys old API_KEY: ${process.env.API_KEY}; new API_KEY: ${API_KEYS[CURRENT_KEY_INDEX]}`)
+    console.log(`(API KEYS)[INFO] Refreshed API keys old API_KEY: ${process.env.API_KEY}; new API_KEY: ${API_KEYS[CURRENT_KEY_INDEX]}`);
     process.env.API_KEY = API_KEYS[CURRENT_KEY_INDEX];
 }
 
@@ -36,7 +36,7 @@ export class Track implements BaseTrack {
         this.name = name;
     }
 
-    public async createAudioResource(start: number = 0): Promise<AudioResource> {
+    public async createAudioResource(start = 0): Promise<AudioResource> {
         const queryParams = `part=id&maxResults=1&q=${encodeURI(this.name)}`;
         let youtubeSearchResult = await (await fetch(`https://www.googleapis.com/youtube/v3/search?${queryParams}&key=${process.env.API_KEY}`)).json();
         while (youtubeSearchResult?.error?.code === 403) {
@@ -63,7 +63,7 @@ export class YoutubeTrack {
         this.name = name;
     }
 
-    public async createAudioResource(start: number = 0): Promise<AudioResource> {
+    public async createAudioResource(start = 0): Promise<AudioResource> {
         const audioStream = ytdl(this.name, {
             range: {
                 start: Math.round(start / 1000)
@@ -147,7 +147,7 @@ export class MusicQueue {
 
         this.audioPlayer.on(AudioPlayerStatus.Idle, (oldState, newState) => {
             if (oldState.status === AudioPlayerStatus.Playing) {
-                console.log(`(MUSIC)[INFO] Played track ${this.currentTrack?.name} in queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`)
+                console.log(`(MUSIC)[INFO] Played track ${this.currentTrack?.name} in queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`);
                 this.currentTrack = undefined;
                 this.processQueue();
             }
@@ -185,7 +185,7 @@ export class MusicQueue {
             this.audioPlayer.play(audioResource);
             this.queueLock = false;
         } catch (error: any) {
-            console.log('(MUSIC)[ERROR] ' + error.message)
+            console.log('(MUSIC)[ERROR] ' + error.message);
             this.queueLock = false;
             return this.processQueue();
         }

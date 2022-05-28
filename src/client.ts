@@ -1,4 +1,4 @@
-import { Client, Intents, MessageAttachment, MessagePayload } from 'discord.js'
+import { Client, Intents, MessageAttachment, MessagePayload } from 'discord.js';
 import { ActionsPlanner, EveryDayAction } from './actionsPlanner';
 import * as fs from 'fs';
 import moment from 'moment';
@@ -14,8 +14,8 @@ client.on('ready', async () => {
         const photo = new MessageAttachment(fs.readFileSync('./images/goodMorningSasha.jpg'), 'good_morning.jpg');
         sashachat.send({
             files: [photo]
-        })
-    }))
+        });
+    }));
 });
 
 export { client };
