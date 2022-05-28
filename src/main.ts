@@ -2,6 +2,7 @@ import { TextChannel } from 'discord.js';
 import 'dotenv/config';
 import { client } from './client';
 import { commands } from './commands';
+import { BOT_TOKEN } from './constants';
 import { Handler } from './handler';
 
 const handler = new Handler(client, commands);
