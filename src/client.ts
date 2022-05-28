@@ -1,7 +1,6 @@
 import { Client, Intents, MessageAttachment, MessagePayload } from 'discord.js';
 import { ActionsPlanner, EveryDayAction } from './actionsPlanner';
 import * as fs from 'fs';
-import moment from 'moment';
 
 const client = new Client({ intents: [Intents.FLAGS.GUILD_MEMBERS, Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_VOICE_STATES, Intents.FLAGS.GUILD_MESSAGES] });
 

@@ -1,7 +1,7 @@
 import { MusicQueue } from './musicQueue';
 
 export class MusicQueueManager {
-    queues: Map<string, MusicQueue>
+    queues: Map<string, MusicQueue>;
 
     constructor() {
         this.queues = new Map();
