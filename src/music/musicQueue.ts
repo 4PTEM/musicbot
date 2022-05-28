@@ -1,79 +1,9 @@
-import { AudioPlayer, AudioPlayerStatus, createAudioPlayer, createAudioResource, entersState, joinVoiceChannel, VoiceConnection, VoiceConnectionDisconnectReason, VoiceConnectionState, VoiceConnectionStatus, demuxProbe, AudioResource } from '@discordjs/voice';
+import { AudioPlayer, AudioPlayerStatus, createAudioPlayer, entersState, joinVoiceChannel, VoiceConnection, VoiceConnectionDisconnectReason, VoiceConnectionStatus } from '@discordjs/voice';
 import { VoiceBasedChannel } from 'discord.js';
 import { promisify } from 'node:util';
-import ytdl from 'ytdl-core';
-import fetch from 'node-fetch';
+import { BaseTrack } from './track';
 
 const wait = promisify(setTimeout);
-
-const API_KEYS = process.env.API_KEYS?.split(' ');
-let CURRENT_KEY_INDEX = -1;
-refreshApiKey();
-function refreshApiKey() {
-    if (!API_KEYS) {
-        console.log('(API KEYS)[ERROR] No api keys provided');
-        return;
-    }
-    CURRENT_KEY_INDEX = (CURRENT_KEY_INDEX + 1);
-    if (CURRENT_KEY_INDEX >= API_KEYS.length) {
-        throw new Error('All API keys exceeded');
-    }
-    console.log(`(API KEYS)[INFO] Refreshed API keys old API_KEY: ${process.env.API_KEY}; new API_KEY: ${API_KEYS[CURRENT_KEY_INDEX]}`);
-    process.env.API_KEY = API_KEYS[CURRENT_KEY_INDEX];
-}
-
-export interface BaseTrack {
-    name: string;
-    triedToReplay: boolean;
-    createAudioResource(start?: number): Promise<AudioResource>;
-}
-
-export class Track implements BaseTrack {
-    name: string;
-    triedToReplay = false;
-
-    constructor(name: string) {
-        this.name = name;
-    }
-
-    public async createAudioResource(start = 0): Promise<AudioResource> {
-        const queryParams = `part=id&maxResults=1&q=${encodeURI(this.name)}`;
-        let youtubeSearchResult = await (await fetch(`https://www.googleapis.com/youtube/v3/search?${queryParams}&key=${process.env.API_KEY}`)).json();
-        while (youtubeSearchResult?.error?.code === 403) {
-            refreshApiKey();
-            youtubeSearchResult = await (await fetch(`https://www.googleapis.com/youtube/v3/search?${queryParams}&key=${process.env.API_KEY}`)).json();
-        }
-        const videoId = youtubeSearchResult?.items[0]?.id?.videoId;
-        const audioStream = ytdl(`https://www.youtube.com/watch?v=${videoId}`, {
-            range: {
-                start: Math.round(start / 1000)
-            },
-            quality: 'highestaudio',
-            filter: 'audioonly'
-        });
-        return createAudioResource(audioStream);
-    }
-}
-
-export class YoutubeTrack {
-    name: string;
-    triedToReplay = false;
-
-    constructor(name: string) {
-        this.name = name;
-    }
-
-    public async createAudioResource(start = 0): Promise<AudioResource> {
-        const audioStream = ytdl(this.name, {
-            range: {
-                start: Math.round(start / 1000)
-            },
-            quality: 'highestaudio',
-            filter: 'audioonly'
-        });
-        return createAudioResource(audioStream);
-    }
-}
 
 export class MusicQueue {
     tracks: BaseTrack[];
@@ -165,7 +95,7 @@ export class MusicQueue {
     public skipTrack(count = 1) {
         this.audioPlayer.stop();
         for (let i = 0; i < count - 1; i++) {
-            if(this.tracks.length == 0) break;
+            if (this.tracks.length == 0) break;
             this.currentTrack = this.tracks.shift()!;
             console.log(`(MUSIC)[INFO] Skipped ${this.currentTrack.name} tracks in queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`);
         }
