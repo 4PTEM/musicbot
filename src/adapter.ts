@@ -1,26 +1,27 @@
 import fetch, { Response } from 'node-fetch';
-import { BaseTrack, Track, YoutubeTrack } from './music/musicQueue';
+import { BaseTrack, Track, YoutubeTrack } from './music/track';
+import { youTubeParser } from './youtubeDataAPI/ytParser';
 
 type yandexTrack = {
-    artists: [{ name: string }],
-    title: string
-}
+    artists: [{ name: string }];
+    title: string;
+};
 
 function getParamsString(params: Record<string, any>) {
     let paramsString = '?';
     const entries = Object.entries(params);
-    entries.forEach(row => {
+    entries.forEach((row) => {
         paramsString += `${row[0]}=${row[1]}&`;
     });
     return paramsString.substring(0, paramsString.length - 1);
 }
 
 export interface BasePlatformAdapter {
-    parse(argsString: string): (Promise<BaseTrack[]> | Track[]);
+    parse(argsString: string): Promise<BaseTrack[]> | Track[];
 }
 
 export class YandexAdapter implements BasePlatformAdapter {
-    private lastVisit = Date.now() / 1000
+    private lastVisit = Date.now() / 1000;
 
     async parse(argsString: string): Promise<BaseTrack[]> {
         const linkregex = /^https:\/\/music\.yandex\.ru\/users\/([^/]*)\/playlists\/([0-9]*)$/;
@@ -40,14 +41,14 @@ export class YandexAdapter implements BasePlatformAdapter {
     }
 
     async request(url: string): Promise<Response> {
-        const response =  fetch(url, {
+        const response = fetch(url, {
             headers: {
-                'Accept': 'application / json, text/ javascript, */*; q=0.01',
+                Accept: 'application / json, text/ javascript, */*; q=0.01',
                 'Accept-Encoding': 'gzip, deflate, br',
-                'Connection': 'keep-alive',
-                'Cookie': `${process.env.YANDEX_COOKIE || ''} active-browser-timestamp=${this.lastVisit};`,
-                'Host': 'music.yandex.ru',
-                'Referer': 'https://music.yandex.ru/users/kukaraches48/playlists/3',
+                Connection: 'keep-alive',
+                Cookie: `${process.env.YANDEX_COOKIE || ''} active-browser-timestamp=${this.lastVisit};`,
+                Host: 'music.yandex.ru',
+                Referer: 'https://music.yandex.ru/users/kukaraches48/playlists/3',
                 'Sec-Fetch-Dest': 'empty',
                 'Sec-Fetch-Mode': 'cors',
                 'Sec-Fetch-Site': 'same-origin',
@@ -58,7 +59,7 @@ export class YandexAdapter implements BasePlatformAdapter {
                 'sec-ch-ua': '" Not A;Brand";v="99", "Chromium";v="101", "Opera";v="87"',
                 'sec-ch-ua-mobile': '?0',
                 'sec-ch-ua-platform': '"Windows"',
-            }
+            },
         });
         this.lastVisit = Date.now() / 1000;
         return response;
@@ -66,12 +67,28 @@ export class YandexAdapter implements BasePlatformAdapter {
 }
 
 export class YouTubeAdapter implements BasePlatformAdapter {
-    parse(argsString: string): BaseTrack[] {
+    async parse(argsString: string): Promise<BaseTrack[]> {
         const linkregex = /^https:\/\/www\.youtube\.com\/watch\?v=[A-z0-9-_]{11}$/;
+        const playlistregex = /^https:\/\/www\.youtube\.com\/playlist\?list=[A-z0-9-_]{34}$/;
         if (linkregex.test(argsString)) {
-            return [new YoutubeTrack(argsString)];
+            return this.parseVideo(argsString);
+        } else if (playlistregex.test(argsString)) {
+            return await this.parsePlayList(argsString);
         }
         return [];
+    }
+
+    parseVideo(link: string): BaseTrack[] {
+        return [new YoutubeTrack(link)];
+    }
+
+    async parsePlayList(link: string): BaseTrack[] {
+        const idregex = /list=([A-z0-9-_]{34})/;
+        const id = [...link.match(idregex)!][1];
+        const tracks = (await youTubeParser.getPlaylistItems(id)).map((video) => {
+            return new YoutubeTrack(`https://www.youtube.com/watch?v=${video.id.videoId}`);
+        }
+        return tracks;
     }
 }
 
@@ -93,5 +110,5 @@ export class Adapter {
 
 export const adapters = new Map<string, BasePlatformAdapter>([
     ['yandex', new YandexAdapter()],
-    ['youtube', new YouTubeAdapter()]
+    ['youtube', new YouTubeAdapter()],
 ]);
