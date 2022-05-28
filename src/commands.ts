@@ -4,6 +4,7 @@ import { Command } from './handler';
 import { MusicQueue } from './music/musicQueue';
 import { BaseTrack } from './music/track';
 import { MusicQueueManager } from './music/musicQueueManager';
+import { MAX_PLAYLIST_LENGTH } from './constants';
 
 const adapter = new Adapter(adapters);
 const musicQueueManager = new MusicQueueManager();
@@ -12,7 +13,7 @@ const commands: Command[] = [
     new Command('play', async (argsString: string, message: Message) => {
         const tracks: BaseTrack[] = await adapter.parse(argsString);
 
-        if (tracks.length > 100) {
+        if (tracks.length > MAX_PLAYLIST_LENGTH) {
             message.channel.send('Playlist is too long');
             return;
         }

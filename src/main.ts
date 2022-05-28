@@ -7,7 +7,6 @@ import { Handler } from './handler';
 
 const handler = new Handler(client, commands);
 
-
 client.on('messageCreate', async message => {
     if(!client.user) throw new Error('No client user');
     const { content, channel } = message;

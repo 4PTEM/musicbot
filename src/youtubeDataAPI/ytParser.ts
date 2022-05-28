@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-import { API_KEYS } from '../constants';
+import { API_KEYS, MAX_PLAYLIST_LENGTH } from '../constants';
 
 let API_KEY: string;
 let CURRENT_KEY_INDEX = -1;
@@ -28,7 +28,7 @@ type YTVideo = {
 };
 class YTParser {
     async searchVideo(name: string): Promise<YTVideo> {
-        const queryParams = `part=id&maxResults=1&q=${encodeURI(name)}`;
+        const queryParams = `part=id&maxResults=${MAX_PLAYLIST_LENGTH + 1}&q=${encodeURI(name)}`;
 
         let youtubeSearchResult = await (await fetch(`https://www.googleapis.com/youtube/v3/search?${queryParams}&key=${API_KEY}`)).json();
         while (youtubeSearchResult?.error?.code === 403) {
