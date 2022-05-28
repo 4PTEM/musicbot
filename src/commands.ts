@@ -1,7 +1,8 @@
 import { Message, Permissions } from 'discord.js';
 import { Adapter, adapters } from './adapter';
 import { Command } from './handler';
-import { MusicQueue, BaseTrack } from './music/musicQueue';
+import { MusicQueue } from './music/musicQueue';
+import { BaseTrack } from './music/track';
 import { MusicQueueManager } from './music/musicQueueManager';
 
 const adapter = new Adapter(adapters);
@@ -113,8 +114,7 @@ const commands: Command[] = [
     new Command('repeat_message', async (argsString, message) => {
         const { channel } = message;
         channel.send(' ');
-    })
+    }),
 ];
 
 export { commands };
-

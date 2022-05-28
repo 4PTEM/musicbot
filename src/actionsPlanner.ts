@@ -1,4 +1,3 @@
-import { Client } from 'discord.js';
 import moment from 'moment';
 
 export interface PlannedAction {

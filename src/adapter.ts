@@ -82,12 +82,12 @@ export class YouTubeAdapter implements BasePlatformAdapter {
         return [new YoutubeTrack(link)];
     }
 
-    async parsePlayList(link: string): BaseTrack[] {
+    async parsePlayList(link: string): Promise<BaseTrack[]> {
         const idregex = /list=([A-z0-9-_]{34})/;
         const id = [...link.match(idregex)!][1];
         const tracks = (await youTubeParser.getPlaylistItems(id)).map((video) => {
             return new YoutubeTrack(`https://www.youtube.com/watch?v=${video.id.videoId}`);
-        }
+        });
         return tracks;
     }
 }
