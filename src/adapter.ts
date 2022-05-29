@@ -4,6 +4,8 @@ import { BaseTrack, Track, YoutubeTrack } from './music/track';
 import { youTubeParser } from './youtubeDataAPI/ytParser';
 
 type yandexTrack = {
+    id: string;
+    realId: string;
     artists: [{ name: string }];
     title: string;
 };
@@ -22,26 +24,52 @@ export interface BasePlatformAdapter {
 }
 
 export class YandexAdapter implements BasePlatformAdapter {
+    private linkRegex = /^https:\/\/music\.yandex\.ru\/users\/([^/]*)\/playlists\/([0-9]*)$/;
+    private albumRegex = /^https:\/\/music\.yandex\.ru\/album\/([^/]*)$/;
+    private trackRegex = /^https:\/\/music\.yandex\.ru\/album\/([^/]*)\/track\/([0-9]*)$/;
     private lastVisit = Date.now() / 1000;
 
     async parse(argsString: string): Promise<BaseTrack[]> {
-        const linkregex = /^https:\/\/music\.yandex\.ru\/users\/([^/]*)\/playlists\/([0-9]*)$/;
-        if (!linkregex.test(argsString)) return [];
-        const match = [...argsString.match(linkregex)!];
-        const owner = match[1];
-        const playlist_id = match[2];
-        let params = { owner, kinds: playlist_id };
-        let paramsString = getParamsString(params);
-        paramsString += '&light=true&madeFor=&withLikesCount=true&forceLogin=true&lang=ru&external-domain=music.yandex.ru&overembed=false&ncrnd=0.4617229546606778';
-        let tracks = (await (await this.request(`https://music.yandex.ru/handlers/playlist.jsx${paramsString}`)).json()).playlist.tracks;
-        tracks = tracks.map((track: yandexTrack) => {
-            let author = track.artists.map((artist) => artist.name).join(', ');
-            return new Track(author + ' - ' + track.title);
-        });
-        return tracks;
+        if (this.linkRegex.test(argsString)) {
+            const match = [...argsString.match(this.linkRegex)!];
+            const owner = match[1];
+            const playlist_id = match[2];
+            return await this.parsePlaylist(owner, playlist_id);
+        } else if (this.albumRegex.test(argsString)) {
+            const match = [...argsString.match(this.albumRegex)!];
+            const albumId = match[1];
+            return await this.parseAlbum(albumId);
+        } else if (this.trackRegex.test(argsString)) {
+            const match = [...argsString.match(this.trackRegex)!];
+            const [, albumId, trackId] = match;
+            return await this.parseTrack(albumId, trackId);
+        }
+        return [];
     }
 
-    async request(url: string): Promise<Response> {
+    private async parseAlbum(albumId: string): Promise<BaseTrack[]> {
+        let paramsString = `?album=${albumId}`;
+        paramsString += '&lang=ru&external-domain=music.yandex.ru&overembed=false&ncrnd=0.38299750155576406';
+        const tracks = (await (await this.request(`https://music.yandex.ru/handlers/album.jsx${paramsString}`)).json()).volumes[0] as yandexTrack[];
+        return this.getTracksFromYandexTracks(tracks);
+    }
+
+    private async parseTrack(albumId: string, trackId: string): Promise<BaseTrack[]> {
+        let paramsString = `?album=${albumId}`;
+        paramsString += '&lang=ru&external-domain=music.yandex.ru&overembed=false&ncrnd=0.38299750155576406';
+        const tracks = (await (await this.request(`https://music.yandex.ru/handlers/album.jsx${paramsString}`)).json()).volumes[0] as yandexTrack[];
+        return this.getTracksFromYandexTracks([tracks.find((track) => track.realId == trackId)!]);
+    }
+
+    private async parsePlaylist(owner: string, playlistId: string): Promise<BaseTrack[]> {
+        let params = { owner, kinds: playlistId };
+        let paramsString = getParamsString(params);
+        paramsString += '&light=true&madeFor=&withLikesCount=true&forceLogin=true&lang=ru&external-domain=music.yandex.ru&overembed=false&ncrnd=0.4617229546606778';
+        let tracks = (await (await this.request(`https://music.yandex.ru/handlers/playlist.jsx${paramsString}`)).json()).playlist.tracks as yandexTrack[];
+        return this.getTracksFromYandexTracks(tracks);
+    }
+
+    request(url: string): Promise<Response> {
         const response = fetch(url, {
             headers: {
                 Accept: 'application / json, text/ javascript, */*; q=0.01',
@@ -65,27 +93,35 @@ export class YandexAdapter implements BasePlatformAdapter {
         this.lastVisit = Date.now() / 1000;
         return response;
     }
+
+    getTracksFromYandexTracks(yandexTracks: yandexTrack[]): BaseTrack[] {
+        return yandexTracks.map((track) => {
+            let author = track.artists.map((artist) => artist.name).join(', ');
+            return new Track(author + ' - ' + track.title);
+        });
+    }
 }
 
 export class YouTubeAdapter implements BasePlatformAdapter {
-    async parse(argsString: string): Promise<BaseTrack[]> {
-        const linkregex = /^https:\/\/www\.youtube\.com\/watch\?v=[A-z0-9-_]*$/;
-        const playlistregex = /^https:\/\/www\.youtube\.com\/playlist\?list=[A-z0-9-_]*$/;
-        if (linkregex.test(argsString)) {
+    private linkRegex = /^https:\/\/www\.youtube\.com\/watch\?v=[A-z0-9-_]*$/;
+    private playlistRegex = /^https:\/\/www\.youtube\.com\/playlist\?list=[A-z0-9-_]*$/;
+
+    public async parse(argsString: string): Promise<BaseTrack[]> {
+        if (this.linkRegex.test(argsString)) {
             return this.parseVideo(argsString);
-        } else if (playlistregex.test(argsString)) {
+        } else if (this.playlistRegex.test(argsString)) {
             return await this.parsePlayList(argsString);
         }
         return [];
     }
 
-    parseVideo(link: string): BaseTrack[] {
+    private parseVideo(link: string): BaseTrack[] {
         return [new YoutubeTrack(link)];
     }
 
-    async parsePlayList(link: string): Promise<BaseTrack[]> {
-        const idregex = /list=([A-z0-9-_]*)/;
-        const id = [...link.match(idregex)!][1];
+    private async parsePlayList(link: string): Promise<BaseTrack[]> {
+        const idRegex = /list=([A-z0-9-_]*)/;
+        const id = [...link.match(idRegex)!][1];
         const tracks = (await youTubeParser.getPlaylistItems(id)).map((video) => {
             return new YoutubeTrack(`https://www.youtube.com/watch?v=${video.contentDetails.videoId}`);
         });
