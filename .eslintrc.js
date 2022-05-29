@@ -1,11 +1,17 @@
 module.exports = {
-    "root": true,
+    "env": {
+        "browser": true,
+        "es2021": true
+    },
     "extends": [
         "eslint:recommended",
         "plugin:@typescript-eslint/recommended"
     ],
     "parser": "@typescript-eslint/parser",
-    "parserOptions": { "project": ["./tsconfig.json"] },
+    "parserOptions": {
+        "ecmaVersion": 12,
+        "sourceType": "module"
+    },
     "plugins": [
         "@typescript-eslint"
     ],
@@ -24,5 +30,5 @@ module.exports = {
         "indent": ["error", 4],
         "object-curly-spacing": [2, "always"],
         "comma-spacing": ["error", { "before": false, "after": true }]
-    }
-}
+    },
+};
