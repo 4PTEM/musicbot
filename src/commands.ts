@@ -112,7 +112,7 @@ const commands: Command[] = [
             if (offset + count > messages.size) count = messages.size - offset;
             for (let i = offset; i < count + offset; i++) {
                 channel.messages.delete(messages.at(i)!).catch((error) => {
-                    count++;
+                    console.log(`(RM_MESSAGES)[Error] Falied to delete message. ${error.message}`);
                 });
             }
             interaction.reply(`Deleted ${count} message(s) after ${offset} message from the last one`);
