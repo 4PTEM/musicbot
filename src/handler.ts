@@ -1,5 +1,5 @@
 import { SlashCommandBooleanOption, SlashCommandBuilder, SlashCommandIntegerOption, SlashCommandNumberOption, SlashCommandStringOption } from '@discordjs/builders';
-import { CacheType, Client, CommandInteraction, CommandInteractionOptionResolver } from 'discord.js';
+import { ApplicationCommand, CacheType, Client, CommandInteraction, CommandInteractionOptionResolver } from 'discord.js';
 
 export type CommandOptions = Omit<CommandInteractionOptionResolver<CacheType>, 'getMessage' | 'getFocused'>;
 export type Option = {
@@ -47,25 +47,25 @@ export class Handler {
 
     constructor(client: Client, commands: Command[]) {
         this.client = client;
+        if (!client.application) {
+            throw new Error('Bad client');
+        }
         this.commands = new Map();
-        let existingCommands: Map<string, string> = new Map();
-        client.application?.fetch().then(async (fetchedCommands) => {
-            for (const [id, command] of fetchedCommands.commands.cache) {
-                existingCommands.set(command.name, command.id);
-            }
-            for (const command of commands) {
-                if (existingCommands.has(command.name)) {
-                    existingCommands.delete(existingCommands.get(command.name)!);
-                }
-                //@ts-ignore
-                client.application?.commands.create(command.buildCommand());
-                this.commands.set(command.name, command);
-            }
-            for (const [name, id] of existingCommands) {
-                if (!this.commands.has(name)) {
+        const commandCreationRequests: Promise<ApplicationCommand>[] = [];
+        const oldCommandsIds = client.application.commands.cache.map((command) => command.id);
+        for (const command of commands) {
+            //@ts-ignore
+            commandCreationRequests.push(client.application.commands.create(command.buildCommand()));
+            this.commands.set(command.name, command);
+        }
+        console.log('Updating commands list');
+        Promise.all(commandCreationRequests).then(async (createdCommands) => {
+            const createdCommandsIds = createdCommands.map((command) => command.id);
+            oldCommandsIds.forEach((id) => {
+                if (!createdCommandsIds.includes(id)) {
                     client.application?.commands.delete(id);
                 }
-            }
+            });
             setInterval(() => this.processQueue(), 300);
             console.log('Bot is ready');
         });
