@@ -1,26 +1,26 @@
-import { Message, Permissions } from 'discord.js';
 import { Adapter, adapters } from './adapter';
+import { MAX_PLAYLIST_LENGTH } from './constants';
 import { Command } from './handler';
 import { MusicQueue } from './music/musicQueue';
-import { BaseTrack } from './music/track';
 import { MusicQueueManager } from './music/musicQueueManager';
-import { MAX_PLAYLIST_LENGTH } from './constants';
+import { BaseTrack } from './music/track';
 
 const adapter = new Adapter(adapters);
 const musicQueueManager = new MusicQueueManager();
 
 const commands: Command[] = [
-    new Command('play', async (argsString: string, message: Message) => {
-        const tracks: BaseTrack[] = await adapter.parse(argsString);
+    new Command('play', 'Adds track to a queue', [{ name: 'query', type: 'string', required: true }], async (options, interaction) => {
+        if (!interaction.channel) return;
 
+        const tracks: BaseTrack[] = await adapter.parse(options.get('query')!.value as string);
         if (tracks.length > MAX_PLAYLIST_LENGTH) {
-            message.channel.send('Playlist is too long');
+            interaction.channel.send('Playlist is too long');
             return;
         }
-        const user = message.guild!.members.cache.get(message.author.id)!;
+        const user = interaction.guild!.members.cache.get(interaction.user.id)!;
         const voiceChannel = user.voice.channel;
         if (!voiceChannel) {
-            message.channel.send('You should be in a voice channel!');
+            interaction.channel.send('You should be in a voice channel!');
             return;
         }
         let musicQueue = musicQueueManager.get(String(voiceChannel.id));
@@ -32,11 +32,12 @@ const commands: Command[] = [
             musicQueue.enqueue(track);
         }
     }),
-    new Command('skip', (argsString: string, message: Message) => {
-        const user = message.guild!.members.cache.get(message.author.id)!;
+    new Command('skip', 'Skips current track', [{ name: 'count', type: 'integer', required: false }], (options, interaction) => {
+        if (!interaction.channel) return;
+        const user = interaction.guild!.members.cache.get(interaction.user.id)!;
         const voiceChannel = user.voice.channel;
         if (!voiceChannel) {
-            message.channel.send('You should be in a voice channel!');
+            interaction.channel.send('You should be in a voice channel!');
             return;
         }
         let musicQueue = musicQueueManager.get(String(voiceChannel.id));
@@ -44,15 +45,15 @@ const commands: Command[] = [
             return;
         }
 
-        let count = 1;
-        if (!isNaN(Number(argsString))) count = Number(argsString);
+        let count = Number(options.get('count')?.value) || 1;
         musicQueue.skipTrack(count);
     }),
-    new Command('repeat_current', async (argsString: string, message: Message) => {
-        const user = message.guild!.members.cache.get(message.author.id)!;
+    new Command('repeat_current', 'Repeats current track', [], async (options, interaction) => {
+        if (!interaction.channel) return;
+        const user = interaction.guild!.members.cache.get(interaction.user.id)!;
         const voiceChannel = user.voice.channel;
         if (!voiceChannel) {
-            message.channel.send('You should be in a voice channel!');
+            interaction.channel.send('You should be in a voice channel!');
             return;
         }
         let musicQueue = musicQueueManager.get(String(voiceChannel.id));
@@ -61,11 +62,12 @@ const commands: Command[] = [
         }
         musicQueue.repeatCurrentTrack();
     }),
-    new Command('norepeat', async (argsString: string, message: Message) => {
-        const user = message.guild!.members.cache.get(message.author.id)!;
+    new Command('norepeat', 'Cancels track replay', [], async (options, interaction) => {
+        if (!interaction.channel) return;
+        const user = interaction.guild!.members.cache.get(interaction.user.id)!;
         const voiceChannel = user.voice.channel;
         if (!voiceChannel) {
-            message.channel.send('You should be in a voice channel!');
+            interaction.channel.send('You should be in a voice channel!');
             return;
         }
         let musicQueue = musicQueueManager.get(String(voiceChannel.id));
@@ -74,65 +76,42 @@ const commands: Command[] = [
         }
         musicQueue.cancelRepeating();
     }),
-    new Command('stop', async (argsString: string, message: Message) => {
-        const user = message.guild!.members.cache.get(message.author.id)!;
+    new Command('stop', 'Stops playing all tracks', [], async (options, interaction) => {
+        if (!interaction.channel) return;
+        const user = interaction.guild!.members.cache.get(interaction.user.id)!;
         const voiceChannel = user.voice.channel;
         if (!voiceChannel) {
-            message.channel.send('You should be in a voice channel!');
+            interaction.channel.send('You should be in a voice channel!');
             return;
         }
         let musicQueue = musicQueueManager.get(String(voiceChannel.id));
         if (!musicQueue) {
-            message.channel.send('No tracks');
+            interaction.channel.send('No tracks');
             return;
         }
 
         musicQueue.stop();
     }),
-    new Command('kick', async (argsString, message) => {
-        const { guild, author, mentions } = message;
-
-        if (!guild) {
-            message.channel.send('Command availible only in guilds');
-            return;
-        }
-
-        const usersToKick = mentions.members;
-        if (!usersToKick) {
-            message.channel.send('Please mention the users you want to kick out');
-            return;
-        }
-
-        const user = guild.members.cache.get(author.id)!;
-        if (!user.permissions.has(Permissions.FLAGS.KICK_MEMBERS)) {
-            message.channel.send('You have no permissions');
-            return;
-        }
-
-        for (const [id, kickableUser] of usersToKick) {
-            if (!kickableUser.kickable) {
-                message.channel.send(`User ${kickableUser.nickname || kickableUser.user.username} cannot be kicked`);
-                continue;
+    new Command(
+        'rm_messages',
+        'Removes messages',
+        [
+            { name: 'count', type: 'integer', required: false },
+            { name: 'offset', type: 'integer', required: false },
+        ],
+        async (options, interaction) => {
+            if (!interaction.channel) return;
+            const { channel } = interaction;
+            const messages = await channel.messages.fetch();
+            let count = Number(options.get('count')?.value) || 1;
+            let offset = Number(options.get('offset')?.value) || 0;
+            if (offset + count > messages.size) count = messages.size - offset;
+            for (let i = offset; i < count + offset; i++) {
+                await channel.messages.delete(messages.at(i)!);
             }
-            guild.members.kick(kickableUser);
-            message.channel.send(`${kickableUser.nickname || kickableUser.user.username} has been kicked from ${guild.name}`);
         }
-    }),
-    new Command('rm_messages', async (argsString, message) => {
-        const { channel } = message;
-        const messages = await channel.messages.fetch();
-        const args = argsString.split(' ');
-        let count = Number(args[0]) || 1;
-        let offset = Number(args[1]) || 0;
-        if (offset + count > messages.size) count = messages.size - offset;
-        for (let i = offset; i < count + offset; i++) {
-            await channel.messages.delete(messages.at(i)!);
-        }
-    }),
-    new Command('repeat_message', async (argsString, message) => {
-        const { channel } = message;
-        channel.send(' ');
-    }),
+    ),
 ];
 
 export { commands };
+
