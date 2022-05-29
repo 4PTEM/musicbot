@@ -111,7 +111,9 @@ const commands: Command[] = [
             let offset = Number(options.get('offset')?.value) || 0;
             if (offset + count > messages.size) count = messages.size - offset;
             for (let i = offset; i < count + offset; i++) {
-                channel.messages.delete(messages.at(i)!);
+                channel.messages.delete(messages.at(i)!).catch((error) => {
+                    count++;
+                });
             }
             interaction.reply(`Deleted ${count} message(s) after ${offset} message from the last one`);
         }
