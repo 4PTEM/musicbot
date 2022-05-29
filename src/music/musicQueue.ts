@@ -69,7 +69,14 @@ export class MusicQueue {
 
         this.audioPlayer.on('error', async (error) => {
             console.log(`(MUSIC)[ERROR] Audioplayer error: ${error}`);
-            if (!this.currentTrack || this.currentTrack.triedToReplay) return;
+            if(!this.currentTrack) {
+                return;
+            } else if (this.currentTrack.triedToReplay) {
+                console.log(`(MUSIC)[INFO] Skipping track ${this.currentTrack.name}`);
+                this.audioPlayer.stop(true);
+                this.processQueue();
+                return;
+            }
             console.log(`(MUSIC)[INFO] Tryng to replay track ${this.currentTrack.name}`);
             this.audioPlayer.play(await this.currentTrack.createAudioResource(error.resource.playbackDuration));
             this.currentTrack.triedToReplay = true;
@@ -78,7 +85,6 @@ export class MusicQueue {
         this.audioPlayer.on(AudioPlayerStatus.Idle, (oldState, newState) => {
             if (oldState.status === AudioPlayerStatus.Playing) {
                 console.log(`(MUSIC)[INFO] Played track ${this.currentTrack?.name} in queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`);
-                this.currentTrack = undefined;
                 this.processQueue();
             }
         });

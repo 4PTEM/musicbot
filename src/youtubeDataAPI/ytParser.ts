@@ -22,13 +22,22 @@ type YTVideo = {
     kind: string;
     etag: string;
     id: {
-        kind: string;
         videoId: string;
     };
 };
+
+type YTContentDetails = {
+    kind: string;
+    etag: string;
+    contentDetails: {
+        kind: string;
+        videoId: string;
+    };
+}
+
 class YTParser {
     async searchVideo(name: string): Promise<YTVideo> {
-        const queryParams = `part=id&maxResults=0&q=${encodeURI(name)}`;
+        const queryParams = `part=id&maxResults=1&q=${encodeURI(name)}`;
 
         let youtubeSearchResult = await (await fetch(`https://www.googleapis.com/youtube/v3/search?${queryParams}&key=${API_KEY}`)).json();
         while (youtubeSearchResult?.error?.code === 403) {
@@ -38,10 +47,10 @@ class YTParser {
         return youtubeSearchResult.items[0] as YTVideo;
     }
 
-    async getPlaylistItems(id: string): Promise<YTVideo[]> {
-        const queryParams = `part=id&playlistId=${encodeURI(id)}`;
+    async getPlaylistItems(id: string): Promise<YTContentDetails[]> {
+        const queryParams = `part=contentDetails&maxResults=${MAX_PLAYLIST_LENGTH + 1}&playlistId=${encodeURI(id)}`;
         const youtubeSearchResult = await this.request(`https://www.googleapis.com/youtube/v3/playlistItems?${queryParams}`);
-        return youtubeSearchResult.items as YTVideo[];
+        return youtubeSearchResult.items as YTContentDetails[];
     }
 
     private async request(url: string): Promise<any> {

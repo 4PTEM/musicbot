@@ -87,7 +87,7 @@ export class YouTubeAdapter implements BasePlatformAdapter {
         const idregex = /list=([A-z0-9-_]*)/;
         const id = [...link.match(idregex)!][1];
         const tracks = (await youTubeParser.getPlaylistItems(id)).map((video) => {
-            return new YoutubeTrack(`https://www.youtube.com/watch?v=${video.id}`);
+            return new YoutubeTrack(`https://www.youtube.com/watch?v=${video.contentDetails.videoId}`);
         });
         return tracks;
     }
