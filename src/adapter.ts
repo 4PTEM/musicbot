@@ -105,12 +105,15 @@ export class YandexAdapter implements BasePlatformAdapter {
 export class YouTubeAdapter implements BasePlatformAdapter {
     private linkRegex = /^https:\/\/www\.youtube\.com\/watch\?v=[A-z0-9-_]*$/;
     private playlistRegex = /^https:\/\/www\.youtube\.com\/playlist\?list=[A-z0-9-_]*$/;
+    private trackInPlaylistRegex = /^https:\/\/www\.youtube\.com\/watch\?v=[A-z0-9-_]*&list=[A-z0-9-_]*&index=[0-9]*$/
 
     public async parse(argsString: string): Promise<BaseTrack[]> {
         if (this.linkRegex.test(argsString)) {
             return this.parseVideo(argsString);
         } else if (this.playlistRegex.test(argsString)) {
             return await this.parsePlayList(argsString);
+        } else if (this.trackInPlaylistRegex.test(argsString)) {
+            return await this.parseTrackInPlayList(argsString);
         }
         return [];
     }
@@ -119,6 +122,15 @@ export class YouTubeAdapter implements BasePlatformAdapter {
         return [new YoutubeTrack(link)];
     }
 
+    private async parseTrackInPlayList(link: string): Promise<BaseTrack[]> {
+        const idRegex = /list=([A-z0-9-_]*)&index=([0-9]*)/;
+        const id = [...link.match(idRegex)!][1];
+        const index = Number([...link.match(idRegex)!][2]);
+        const tracks = (await youTubeParser.getPlaylistItems(id)).slice(index - 1).map((video) => {
+            return new YoutubeTrack(`https://www.youtube.com/watch?v=${video.contentDetails.videoId}`);
+        });
+        return tracks;
+    }
     private async parsePlayList(link: string): Promise<BaseTrack[]> {
         const idRegex = /list=([A-z0-9-_]*)/;
         const id = [...link.match(idRegex)!][1];
