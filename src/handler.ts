@@ -67,7 +67,7 @@ export class Handler {
                 }
             }
             setInterval(() => this.processQueue(), 300);
-            console.log(`Bot is ready`);
+            console.log('Bot is ready');
         });
     }
 

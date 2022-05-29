@@ -9,28 +9,33 @@ const adapter = new Adapter(adapters);
 const musicQueueManager = new MusicQueueManager();
 
 const commands: Command[] = [
-    new Command('play', 'Adds track to a queue', [{ name: 'query', type: 'string', required: true, description: 'search query or url to on of supported music platforms' }], async (options, interaction) => {
-        const tracks: BaseTrack[] = await adapter.parse(options.get('query')!.value as string);
-        if (tracks.length > MAX_PLAYLIST_LENGTH) {
-            interaction.reply('Playlist is too long');
-            return;
-        }
-        const user = interaction.guild!.members.cache.get(interaction.user.id)!;
-        const voiceChannel = user.voice.channel;
-        if (!voiceChannel) {
-            interaction.reply('You should be in a voice channel!');
-            return;
-        }
-        let musicQueue = musicQueueManager.get(String(voiceChannel.id));
-        if (!musicQueue) {
-            musicQueue = musicQueueManager.set(String(voiceChannel.id), new MusicQueue(voiceChannel));
-        }
+    new Command(
+        'play',
+        'Adds track to a queue',
+        [{ name: 'query', type: 'string', required: true, description: 'search query or url to on of supported music platforms' }],
+        async (options, interaction) => {
+            const tracks: BaseTrack[] = await adapter.parse(options.get('query')!.value as string);
+            if (tracks.length > MAX_PLAYLIST_LENGTH) {
+                interaction.reply('Playlist is too long');
+                return;
+            }
+            const user = interaction.guild!.members.cache.get(interaction.user.id)!;
+            const voiceChannel = user.voice.channel;
+            if (!voiceChannel) {
+                interaction.reply('You should be in a voice channel!');
+                return;
+            }
+            let musicQueue = musicQueueManager.get(String(voiceChannel.id));
+            if (!musicQueue) {
+                musicQueue = musicQueueManager.set(String(voiceChannel.id), new MusicQueue(voiceChannel));
+            }
 
-        for (const track of tracks) {
-            musicQueue.enqueue(track);
+            for (const track of tracks) {
+                musicQueue.enqueue(track);
+            }
+            interaction.reply(`Enqueued ${tracks.length} tracks`);
         }
-        interaction.reply(`Enqueued ${tracks.length} tracks`);
-    }),
+    ),
     new Command('skip', 'Skips current track', [{ name: 'count', type: 'integer', required: false, description: 'Number of skipped tracks' }], (options, interaction) => {
         const user = interaction.guild!.members.cache.get(interaction.user.id)!;
         const voiceChannel = user.voice.channel;
