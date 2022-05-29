@@ -55,7 +55,7 @@ export class MusicQueue {
             }
         });
 
-        this.voiceConnection.on(VoiceConnectionStatus.Connecting, async (oldState, newState) => {
+        this.voiceConnection.on(VoiceConnectionStatus.Signalling, async (oldState, newState) => {
             if (!this.readyLock) {
                 this.readyLock = true;
                 try {
