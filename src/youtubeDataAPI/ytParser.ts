@@ -22,6 +22,7 @@ type YTVideo = {
     kind: string;
     etag: string;
     id: {
+        kind: string;
         videoId: string;
     };
 };
@@ -37,14 +38,14 @@ type YTContentDetails = {
 
 class YTParser {
     async searchVideo(name: string): Promise<YTVideo> {
-        const queryParams = `part=id&maxResults=1&q=${encodeURI(name)}`;
+        const queryParams = `part=id&maxResults=20&q=${encodeURI(name)}`;
 
         let youtubeSearchResult = await (await fetch(`https://www.googleapis.com/youtube/v3/search?${queryParams}&key=${API_KEY}`)).json();
         while (youtubeSearchResult?.error?.code === 403) {
             refreshApiKey();
             youtubeSearchResult = await (await fetch(`https://www.googleapis.com/youtube/v3/search?${queryParams}&key=${API_KEY}`)).json();
         }
-        return youtubeSearchResult.items[0] as YTVideo;
+        return youtubeSearchResult.items.find((item: YTVideo) => item.id.kind == 'youtube#video');
     }
 
     async getPlaylistItems(id: string): Promise<YTContentDetails[]> {

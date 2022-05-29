@@ -12,7 +12,7 @@ export class MusicQueue {
     private voiceConnection: VoiceConnection;
     private queueLock = false;
     private readyLock = false;
-    public repeatCurrentTrack = true;
+    private repeatTrack = false;
     private currentTrack: BaseTrack | undefined;
 
     constructor(voiceChannel: VoiceBasedChannel) {
@@ -70,7 +70,7 @@ export class MusicQueue {
 
         this.audioPlayer.on('error', async (error) => {
             console.log(`(MUSIC)[ERROR] Audioplayer error: ${error}`);
-            if(!this.currentTrack) {
+            if (!this.currentTrack) {
                 return;
             } else if (this.currentTrack.triedToReplay) {
                 console.log(`(MUSIC)[INFO] Skipping track ${this.currentTrack.name}`);
@@ -86,6 +86,10 @@ export class MusicQueue {
         this.audioPlayer.on(AudioPlayerStatus.Idle, (oldState, newState) => {
             if (oldState.status === AudioPlayerStatus.Playing) {
                 console.log(`(MUSIC)[INFO] Played track ${this.currentTrack?.name} in queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`);
+                if (this.repeatTrack && this.currentTrack) {
+                    this.tracks.unshift(this.currentTrack);
+                    console.log(`(MUSIC)[INFO] Replaying track ${this.currentTrack.name} in queue ${this.voiceChannel.id}`);
+                }
                 this.processQueue();
             }
         });
@@ -109,6 +113,16 @@ export class MusicQueue {
         this.processQueue();
     }
 
+    public repeatCurrentTrack() {
+        this.repeatTrack = true;
+        console.log(`(MUSIC)[INFO] Track ${this.currentTrack?.name || ''} will be repeated`);
+    }
+
+    public cancelRepeating() {
+        this.repeatTrack = false;
+        console.log(`(MUSIC)[INFO] Track ${this.currentTrack?.name || ''} will be no more repeated`);
+    }
+
     private async processQueue(): Promise<void> {
         if (this.queueLock || this.audioPlayer.state.status !== AudioPlayerStatus.Idle || this.tracks.length === 0) {
             return;
@@ -116,9 +130,6 @@ export class MusicQueue {
         this.queueLock = true;
 
         const track = this.tracks.shift()!;
-        if(this.repeatCurrentTrack) {
-            this.tracks.unshift(track);
-        }
         try {
             this.currentTrack = track;
             const audioResource = await track.createAudioResource();

@@ -141,7 +141,7 @@ export class Adapter {
         } else if (argsString.startsWith('https://www.youtube.com')) {
             return await this.adapters.get('youtube')!.parse(argsString);
         }
-        return [];
+        return [new Track(argsString)];
     }
 }
 

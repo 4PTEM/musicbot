@@ -59,7 +59,20 @@ const commands: Command[] = [
         if (!musicQueue) {
             return;
         }
-        musicQueue.repeatCurrentTrack = true;
+        musicQueue.repeatCurrentTrack();
+    }),
+    new Command('norepeat', async (argsString: string, message: Message) => {
+        const user = message.guild!.members.cache.get(message.author.id)!;
+        const voiceChannel = user.voice.channel;
+        if (!voiceChannel) {
+            message.channel.send('You should be in a voice channel!');
+            return;
+        }
+        let musicQueue = musicQueueManager.get(String(voiceChannel.id));
+        if (!musicQueue) {
+            return;
+        }
+        musicQueue.cancelRepeating();
     }),
     new Command('stop', async (argsString: string, message: Message) => {
         const user = message.guild!.members.cache.get(message.author.id)!;
