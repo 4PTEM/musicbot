@@ -25,7 +25,10 @@ client.on('ready', async () => {
     client.on('interactionCreate', async (interaction) => {
         if (!client.user) throw new Error('No client user');
         const { channel } = interaction;
-        if (!channel || !interaction.guild || !interaction.channel || !interaction.isCommand() || !interaction.inGuild()) return;
+        if (!channel || !interaction.guild || !interaction.channel || !interaction.isCommand() || !interaction.inGuild()) {
+            console.log('Bad interaction');
+            return;
+        }
         handler.handleCommand(interaction.commandName, interaction.options, interaction);
     });
 });

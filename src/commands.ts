@@ -9,18 +9,16 @@ const adapter = new Adapter(adapters);
 const musicQueueManager = new MusicQueueManager();
 
 const commands: Command[] = [
-    new Command('play', 'Adds track to a queue', [{ name: 'query', type: 'string', required: true }], async (options, interaction) => {
-        if (!interaction.channel) return;
-
+    new Command('play', 'Adds track to a queue', [{ name: 'query', type: 'string', required: true, description: 'search query or url to on of supported music platforms' }], async (options, interaction) => {
         const tracks: BaseTrack[] = await adapter.parse(options.get('query')!.value as string);
         if (tracks.length > MAX_PLAYLIST_LENGTH) {
-            interaction.channel.send('Playlist is too long');
+            interaction.reply('Playlist is too long');
             return;
         }
         const user = interaction.guild!.members.cache.get(interaction.user.id)!;
         const voiceChannel = user.voice.channel;
         if (!voiceChannel) {
-            interaction.channel.send('You should be in a voice channel!');
+            interaction.reply('You should be in a voice channel!');
             return;
         }
         let musicQueue = musicQueueManager.get(String(voiceChannel.id));
@@ -31,13 +29,13 @@ const commands: Command[] = [
         for (const track of tracks) {
             musicQueue.enqueue(track);
         }
+        interaction.reply(`Enqueued ${tracks.length} tracks`);
     }),
-    new Command('skip', 'Skips current track', [{ name: 'count', type: 'integer', required: false }], (options, interaction) => {
-        if (!interaction.channel) return;
+    new Command('skip', 'Skips current track', [{ name: 'count', type: 'integer', required: false, description: 'Number of skipped tracks' }], (options, interaction) => {
         const user = interaction.guild!.members.cache.get(interaction.user.id)!;
         const voiceChannel = user.voice.channel;
         if (!voiceChannel) {
-            interaction.channel.send('You should be in a voice channel!');
+            interaction.reply('You should be in a voice channel!');
             return;
         }
         let musicQueue = musicQueueManager.get(String(voiceChannel.id));
@@ -47,13 +45,13 @@ const commands: Command[] = [
 
         let count = Number(options.get('count')?.value) || 1;
         musicQueue.skipTrack(count);
+        interaction.reply('Track skipped');
     }),
     new Command('repeat_current', 'Repeats current track', [], async (options, interaction) => {
-        if (!interaction.channel) return;
         const user = interaction.guild!.members.cache.get(interaction.user.id)!;
         const voiceChannel = user.voice.channel;
         if (!voiceChannel) {
-            interaction.channel.send('You should be in a voice channel!');
+            interaction.reply('You should be in a voice channel!');
             return;
         }
         let musicQueue = musicQueueManager.get(String(voiceChannel.id));
@@ -61,13 +59,13 @@ const commands: Command[] = [
             return;
         }
         musicQueue.repeatCurrentTrack();
+        interaction.reply('Current track will be replayed');
     }),
     new Command('norepeat', 'Cancels track replay', [], async (options, interaction) => {
-        if (!interaction.channel) return;
         const user = interaction.guild!.members.cache.get(interaction.user.id)!;
         const voiceChannel = user.voice.channel;
         if (!voiceChannel) {
-            interaction.channel.send('You should be in a voice channel!');
+            interaction.reply('You should be in a voice channel!');
             return;
         }
         let musicQueue = musicQueueManager.get(String(voiceChannel.id));
@@ -75,29 +73,30 @@ const commands: Command[] = [
             return;
         }
         musicQueue.cancelRepeating();
+        interaction.reply('Replay canceled');
     }),
     new Command('stop', 'Stops playing all tracks', [], async (options, interaction) => {
-        if (!interaction.channel) return;
         const user = interaction.guild!.members.cache.get(interaction.user.id)!;
         const voiceChannel = user.voice.channel;
         if (!voiceChannel) {
-            interaction.channel.send('You should be in a voice channel!');
+            interaction.reply('You should be in a voice channel!');
             return;
         }
         let musicQueue = musicQueueManager.get(String(voiceChannel.id));
         if (!musicQueue) {
-            interaction.channel.send('No tracks');
+            interaction.reply('No tracks');
             return;
         }
 
         musicQueue.stop();
+        interaction.reply('Playback stopped');
     }),
     new Command(
         'rm_messages',
         'Removes messages',
         [
-            { name: 'count', type: 'integer', required: false },
-            { name: 'offset', type: 'integer', required: false },
+            { name: 'count', type: 'integer', required: false, description: 'Number of removed messages' },
+            { name: 'offset', type: 'integer', required: false, description: 'Offset from last message in channel' },
         ],
         async (options, interaction) => {
             if (!interaction.channel) return;
@@ -109,9 +108,9 @@ const commands: Command[] = [
             for (let i = offset; i < count + offset; i++) {
                 await channel.messages.delete(messages.at(i)!);
             }
+            interaction.reply(`Deleted ${count} message(s) after ${offset} message from the last one`);
         }
     ),
 ];
 
 export { commands };
-
