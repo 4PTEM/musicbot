@@ -17,10 +17,7 @@ const commands: Command[] = [
             message.channel.send('Playlist is too long');
             return;
         }
-        if (!message.guild) {
-            return;
-        }
-        const user = message.guild.members.cache.get(message.author.id)!;
+        const user = message.guild!.members.cache.get(message.author.id)!;
         const voiceChannel = user.voice.channel;
         if (!voiceChannel) {
             message.channel.send('You should be in a voice channel!');
@@ -36,10 +33,7 @@ const commands: Command[] = [
         }
     }),
     new Command('skip', (argsString: string, message: Message) => {
-        if (!message.guild) {
-            return;
-        }
-        const user = message.guild.members.cache.get(message.author.id)!;
+        const user = message.guild!.members.cache.get(message.author.id)!;
         const voiceChannel = user.voice.channel;
         if (!voiceChannel) {
             message.channel.send('You should be in a voice channel!');
@@ -47,18 +41,28 @@ const commands: Command[] = [
         }
         let musicQueue = musicQueueManager.get(String(voiceChannel.id));
         if (!musicQueue) {
-            musicQueue = musicQueueManager.set(String(voiceChannel.id), new MusicQueue(voiceChannel));
+            return;
         }
 
         let count = 1;
         if (!isNaN(Number(argsString))) count = Number(argsString);
         musicQueue.skipTrack(count);
     }),
-    new Command('stop', async (argsString: string, message: Message) => {
-        if (!message.guild) {
+    new Command('repeat_current', async (argsString: string, message: Message) => {
+        const user = message.guild!.members.cache.get(message.author.id)!;
+        const voiceChannel = user.voice.channel;
+        if (!voiceChannel) {
+            message.channel.send('You should be in a voice channel!');
             return;
         }
-        const user = message.guild.members.cache.get(message.author.id)!;
+        let musicQueue = musicQueueManager.get(String(voiceChannel.id));
+        if (!musicQueue) {
+            return;
+        }
+        musicQueue.repeatCurrentTrack = true;
+    }),
+    new Command('stop', async (argsString: string, message: Message) => {
+        const user = message.guild!.members.cache.get(message.author.id)!;
         const voiceChannel = user.voice.channel;
         if (!voiceChannel) {
             message.channel.send('You should be in a voice channel!');

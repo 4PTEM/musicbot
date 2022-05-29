@@ -6,13 +6,14 @@ import { BaseTrack } from './track';
 const wait = promisify(setTimeout);
 
 export class MusicQueue {
-    tracks: BaseTrack[];
-    voiceChannel: VoiceBasedChannel;
-    audioPlayer: AudioPlayer;
-    voiceConnection: VoiceConnection;
-    queueLock = false;
-    readyLock = false;
-    currentTrack: BaseTrack | undefined;
+    private tracks: BaseTrack[];
+    private voiceChannel: VoiceBasedChannel;
+    private audioPlayer: AudioPlayer;
+    private voiceConnection: VoiceConnection;
+    private queueLock = false;
+    private readyLock = false;
+    public repeatCurrentTrack = true;
+    private currentTrack: BaseTrack | undefined;
 
     constructor(voiceChannel: VoiceBasedChannel) {
         this.tracks = [];
@@ -101,7 +102,7 @@ export class MusicQueue {
     public skipTrack(count = 1) {
         this.audioPlayer.stop();
         for (let i = 0; i < count - 1; i++) {
-            if (this.tracks.length == 0) break;
+            if (this.tracks.length === 0) break;
             this.currentTrack = this.tracks.shift()!;
             console.log(`(MUSIC)[INFO] Skipped ${this.currentTrack.name} tracks in queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`);
         }
@@ -115,6 +116,9 @@ export class MusicQueue {
         this.queueLock = true;
 
         const track = this.tracks.shift()!;
+        if(this.repeatCurrentTrack) {
+            this.tracks.unshift(track);
+        }
         try {
             this.currentTrack = track;
             const audioResource = await track.createAudioResource();
