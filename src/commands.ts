@@ -27,8 +27,9 @@ const commands: Command[] = [
             }
             let musicQueue = musicQueueManager.get(String(voiceChannel.id));
             if (!musicQueue) {
-                musicQueue = musicQueueManager.set(String(voiceChannel.id), new MusicQueue(voiceChannel));
+                musicQueue = musicQueueManager.set(String(voiceChannel.id), new MusicQueue(voiceChannel, interaction.channel!));
             }
+            musicQueue.setTextChannel(interaction.channel!);
 
             for (const track of tracks) {
                 musicQueue.enqueue(track);
@@ -47,6 +48,7 @@ const commands: Command[] = [
         if (!musicQueue) {
             return;
         }
+        musicQueue.setTextChannel(interaction.channel!);
 
         let count = Number(options.get('count')?.value) || 1;
         musicQueue.skipTrack(count);
@@ -63,6 +65,7 @@ const commands: Command[] = [
         if (!musicQueue) {
             return;
         }
+        musicQueue.setTextChannel(interaction.channel!);
         musicQueue.repeatCurrentTrack();
         interaction.reply('Current track will be replayed');
     }),

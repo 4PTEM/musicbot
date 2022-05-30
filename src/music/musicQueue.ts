@@ -1,5 +1,5 @@
 import { AudioPlayer, AudioPlayerStatus, createAudioPlayer, entersState, joinVoiceChannel, VoiceConnection, VoiceConnectionDisconnectReason, VoiceConnectionStatus } from '@discordjs/voice';
-import { VoiceBasedChannel } from 'discord.js';
+import { GuildTextBasedChannel, VoiceBasedChannel } from 'discord.js';
 import { promisify } from 'node:util';
 import { BaseTrack } from './track';
 
@@ -14,10 +14,12 @@ export class MusicQueue {
     private readyLock = false;
     private repeatTrack = false;
     private currentTrack: BaseTrack | undefined;
+    private textChannel: GuildTextBasedChannel;
 
-    constructor(voiceChannel: VoiceBasedChannel) {
+    constructor(voiceChannel: VoiceBasedChannel, textChannel: GuildTextBasedChannel) {
         this.tracks = [];
         this.voiceChannel = voiceChannel;
+        this.textChannel = textChannel;
         this.audioPlayer = createAudioPlayer();
         const guild = this.voiceChannel.guild;
         //@ts-ignore
@@ -129,10 +131,10 @@ export class MusicQueue {
         }
         this.queueLock = true;
 
-        const track = this.tracks.shift()!;
+        this.currentTrack = this.tracks.shift()!;
         try {
-            this.currentTrack = track;
-            const audioResource = await track.createAudioResource();
+            const audioResource = await this.currentTrack.createAudioResource();
+            this.textChannel.send(`Playing track ${this.currentTrack.name}`)
             this.audioPlayer.play(audioResource);
             this.queueLock = false;
         } catch (error: any) {
@@ -145,5 +147,9 @@ export class MusicQueue {
     public stop() {
         this.tracks = [];
         this.audioPlayer.stop(true);
+    }
+
+    public setTextChannel(textChannel: GuildTextBasedChannel) {
+        this.textChannel = textChannel;
     }
 }
