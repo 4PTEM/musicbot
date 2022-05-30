@@ -72,6 +72,7 @@ export class MusicQueue {
 
         this.audioPlayer.on('error', async (error) => {
             console.log(`(MUSIC)[ERROR] Audioplayer error: ${error}`);
+            this.audioPlayer.stop(true);
             if (!this.currentTrack) {
                 return;
             } else if (this.currentTrack.triedToReplay) {
