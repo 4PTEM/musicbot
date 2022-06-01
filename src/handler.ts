@@ -45,30 +45,32 @@ export class Handler {
     queueLock = false;
     queue: { command: (options: CommandOptions, interaction: CommandInteraction<'cached' | 'raw'>) => void; options: CommandOptions; interaction: CommandInteraction<'cached' | 'raw'> }[] = [];
 
-    constructor(client: Client, commands: Command[]) {
+    constructor(client: Client) {
         this.client = client;
         if (!client.application) {
             throw new Error('Bad client');
         }
         this.commands = new Map();
+    }
+
+    async initCommands(commands: Command[]): Promise<void> {
         const commandCreationRequests: Promise<ApplicationCommand>[] = [];
-        const oldCommandsIds = client.application.commands.cache.map((command) => command.id);
+        const oldCommandsIds = this.client.application!.commands.cache.map((command) => command.id);
         for (const command of commands) {
             //@ts-ignore
             commandCreationRequests.push(client.application.commands.create(command.buildCommand()));
             this.commands.set(command.name, command);
         }
         console.log('Updating commands list');
-        Promise.all(commandCreationRequests).then(async (createdCommands) => {
-            const createdCommandsIds = createdCommands.map((command) => command.id);
-            oldCommandsIds.forEach((id) => {
-                if (!createdCommandsIds.includes(id)) {
-                    client.application?.commands.delete(id);
-                }
-            });
-            setInterval(() => this.processQueue(), 300);
-            console.log('Bot is ready');
+        const createdCommands = await Promise.all(commandCreationRequests);
+        const createdCommandsIds = createdCommands.map((command) => command.id);
+        oldCommandsIds.forEach((id) => {
+            if (!createdCommandsIds.includes(id)) {
+                this.client.application?.commands.delete(id);
+            }
         });
+        setInterval(() => this.processQueue(), 300);
+        console.log('Bot is ready');
     }
 
     async processQueue(): Promise<void> {

@@ -10,7 +10,8 @@ client.on('ready', async () => {
     await client.application?.commands.fetch();
     if (!client.user) throw new Error('authentication error');
     console.log(`Logged in as ${client.user.tag}!`);
-    const handler = new Handler(client, commands);
+    const handler = new Handler(client);
+    await handler.initCommands(commands);
     client.on('interactionCreate', async (interaction) => {
         if (!client.user) throw new Error('No client user');
         const { channel } = interaction;
