@@ -16,12 +16,9 @@ export class Track implements BaseTrack {
         this.name = name;
     }
 
-    public async createAudioResource(start = 0): Promise<AudioResource> {
+    public async createAudioResource(): Promise<AudioResource> {
         const videoId = (await youTubeParser.searchVideo(this.name)).id.videoId;
         const audioStream = ytdl(`https://www.youtube.com/watch?v=${videoId}`, {
-            range: {
-                start: Math.round(start / 1000),
-            },
             quality: 'highestaudio',
             filter: 'audioonly',
         });
@@ -37,11 +34,8 @@ export class YoutubeTrack {
         this.name = name;
     }
 
-    public async createAudioResource(start = 0): Promise<AudioResource> {
+    public async createAudioResource(): Promise<AudioResource> {
         const audioStream = ytdl(this.name, {
-            range: {
-                start: Math.round(start / 1000),
-            },
             quality: 'highestaudio',
             filter: 'audioonly',
         });

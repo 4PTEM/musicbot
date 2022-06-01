@@ -72,18 +72,12 @@ export class MusicQueue {
 
         this.audioPlayer.on('error', async (error) => {
             console.log(`(MUSIC)[ERROR] Audioplayer error: ${error}`);
-            this.audioPlayer.stop(true);
             if (!this.currentTrack) {
                 return;
-            } else if (this.currentTrack.triedToReplay) {
-                console.log(`(MUSIC)[INFO] Skipping track ${this.currentTrack.name}`);
-                this.audioPlayer.stop(true);
-                this.processQueue();
-                return;
             }
-            console.log(`(MUSIC)[INFO] Tryng to replay track ${this.currentTrack.name}`);
-            this.audioPlayer.play(await this.currentTrack.createAudioResource(error.resource.playbackDuration));
-            this.currentTrack.triedToReplay = true;
+            console.log(`(MUSIC)[INFO] Skipping track ${this.currentTrack.name} due error`);
+            this.audioPlayer.stop(true);
+            return;
         });
 
         this.audioPlayer.on(AudioPlayerStatus.Idle, (oldState, newState) => {
@@ -106,14 +100,17 @@ export class MusicQueue {
         this.processQueue();
     }
 
-    public skipTrack(count = 1) {
-        this.audioPlayer.stop();
-        for (let i = 0; i < count - 1; i++) {
-            if (this.tracks.length === 0) break;
-            this.currentTrack = this.tracks.shift()!;
+    public skipTrack(count = 1): string {
+        let skippedTracksNames = '';
+        for (let i = 0; i < count; i++) {
+            if(!this.currentTrack) break;
+            skippedTracksNames += this.currentTrack.name + '\n';
             console.log(`(MUSIC)[INFO] Skipped ${this.currentTrack.name} tracks in queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`);
+            if (this.tracks.length === 0 || i == count - 1) break;
+            this.currentTrack = this.tracks.shift()!;
         }
-        this.processQueue();
+        this.audioPlayer.stop(true);
+        return skippedTracksNames;
     }
 
     public repeatCurrentTrack() {
@@ -135,7 +132,7 @@ export class MusicQueue {
         this.currentTrack = this.tracks.shift()!;
         try {
             const audioResource = await this.currentTrack.createAudioResource();
-            this.textChannel.send(`Playing track ${this.currentTrack.name}`)
+            this.textChannel.send(`Playing track ${this.currentTrack.name}`);
             this.audioPlayer.play(audioResource);
             this.queueLock = false;
         } catch (error: any) {

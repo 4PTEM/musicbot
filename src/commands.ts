@@ -51,8 +51,8 @@ const commands: Command[] = [
         musicQueue.setTextChannel(interaction.channel!);
 
         let count = Number(options.get('count')?.value) || 1;
-        musicQueue.skipTrack(count);
-        interaction.reply('Track skipped');
+        const skippedTracksList = musicQueue.skipTrack(count);
+        interaction.reply(`Skipped tracks: \n${skippedTracksList}`);
     }),
     new Command('repeat_current', 'Repeats current track', [], async (options, interaction) => {
         const user = interaction.guild!.members.cache.get(interaction.user.id)!;
