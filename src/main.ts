@@ -6,6 +6,22 @@ import { Handler } from './handler';
 
 const client = new Client({ intents: [Intents.FLAGS.GUILD_MEMBERS, Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_VOICE_STATES, Intents.FLAGS.GUILD_MESSAGES] });
 
+setInterval(() => {
+    let totalMemoryUsage = 0;
+    for(let memoryForProcess of Object.values(process.memoryUsage())) {
+        totalMemoryUsage += memoryForProcess;
+    }
+    if(totalMemoryUsage / 1000000 > 600) {
+        console.log(
+            `!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`,
+            `!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`,
+            `!!!!!!!!!!!EMERGENCY!!!!!!!!!!!`,
+            `!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`,
+            `!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`,
+        )
+    }
+}, 1000);
+
 client.on('ready', async () => {
     await client.application?.commands.fetch();
     if (!client.user) throw new Error('authentication error');
