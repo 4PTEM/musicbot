@@ -58,7 +58,7 @@ export class Handler {
         const oldCommandsIds = this.client.application!.commands.cache.map((command) => command.id);
         for (const command of commands) {
             //@ts-ignore
-            commandCreationRequests.push(client.application.commands.create(command.buildCommand()));
+            commandCreationRequests.push(this.client.application.commands.create(command.buildCommand()));
             this.commands.set(command.name, command);
         }
         console.log('Updating commands list');
