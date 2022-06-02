@@ -105,7 +105,7 @@ export class YandexAdapter implements BasePlatformAdapter {
 export class YouTubeAdapter implements BasePlatformAdapter {
     private linkRegex = /^https:\/\/www\.youtube\.com\/watch\?v=[A-z0-9-_]*$/;
     private playlistRegex = /^https:\/\/www\.youtube\.com\/playlist\?list=[A-z0-9-_]*$/;
-    private trackInPlaylistRegex = /^https:\/\/www\.youtube\.com\/watch\?v=[A-z0-9-_]*&list=[A-z0-9-_]*&index=[0-9]*$/
+    private trackInPlaylistRegex = /^https:\/\/www\.youtube\.com\/watch\?v=[A-z0-9-_]*&list=[A-z0-9-_]*&index=[0-9]*$/;
 
     public async parse(argsString: string): Promise<BaseTrack[]> {
         if (this.linkRegex.test(argsString)) {

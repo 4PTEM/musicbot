@@ -8,17 +8,17 @@ const client = new Client({ intents: [Intents.FLAGS.GUILD_MEMBERS, Intents.FLAGS
 
 setInterval(() => {
     let totalMemoryUsage = 0;
-    for(let memoryForProcess of Object.values(process.memoryUsage())) {
+    for (let memoryForProcess of Object.values(process.memoryUsage())) {
         totalMemoryUsage += memoryForProcess;
     }
-    if(totalMemoryUsage / 1000000 > 600) {
+    if (totalMemoryUsage / 1000000 > 600) {
         console.log(
-            `!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`,
-            `!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`,
-            `!!!!!!!!!!!EMERGENCY!!!!!!!!!!!`,
-            `!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`,
-            `!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`,
-        )
+            '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!',
+            '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!',
+            '!!!!!!!!!!!!!!!!!!!!!!!!!!!EMERGENCY!!!!!!!!!!!!!!!!!!!!!!!!!!!',
+            '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!',
+            '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+        );
     }
 }, 1000);
 
