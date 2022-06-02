@@ -3,7 +3,7 @@ import { MAX_PLAYLIST_LENGTH } from './constants';
 import { Command } from './handler';
 import { MusicQueue } from './music/musicQueue';
 import { MusicQueueManager } from './music/musicQueueManager';
-import { BaseTrack } from './music/track';
+import { BaseTrack, YoutubeTrack } from './music/track';
 
 const adapter = new Adapter(adapters);
 const musicQueueManager = new MusicQueueManager();
@@ -121,6 +121,21 @@ const commands: Command[] = [
             interaction.reply(`Deleted ${count} message(s) after ${offset} message from the last one`);
         }
     ),
+    new Command('shpingalop', 'Lopaet shpingaleti', [], async (options, interaction) => {
+            const user = interaction.guild!.members.cache.get(interaction.user.id)!;
+            const voiceChannel = user.voice.channel;
+            if (!voiceChannel) {
+                interaction.reply('You should be in a voice channel!');
+                return;
+            }
+            let musicQueue = musicQueueManager.get(String(voiceChannel.id));
+            if (!musicQueue) {
+                musicQueue = musicQueueManager.set(String(voiceChannel.id), new MusicQueue(voiceChannel, interaction.channel!));
+            }
+            musicQueue.enqueue(new YoutubeTrack('https://www.youtube.com/watch?v=WcWnhK9-S7M'));
+            interaction.reply('Шпингалеты лопнули');
+        }
+    )
 ];
 
 export { commands };
