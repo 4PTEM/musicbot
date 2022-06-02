@@ -34,10 +34,10 @@ type YTContentDetails = {
         kind: string;
         videoId: string;
     };
-}
+};
 
 class YTParser {
-    async searchVideo(name: string): Promise<YTVideo> {
+    public async searchVideo(name: string): Promise<YTVideo> {
         const queryParams = `part=id&maxResults=20&q=${encodeURI(name)}`;
 
         let youtubeSearchResult = await (await fetch(`https://www.googleapis.com/youtube/v3/search?${queryParams}&key=${API_KEY}`)).json();
@@ -48,7 +48,7 @@ class YTParser {
         return youtubeSearchResult.items.find((item: YTVideo) => item.id.kind == 'youtube#video');
     }
 
-    async getPlaylistItems(id: string): Promise<YTContentDetails[]> {
+    public async getPlaylistItems(id: string): Promise<YTContentDetails[]> {
         const queryParams = `part=contentDetails&maxResults=${MAX_PLAYLIST_LENGTH + 1}&playlistId=${encodeURI(id)}`;
         const youtubeSearchResult = await this.request(`https://www.googleapis.com/youtube/v3/playlistItems?${queryParams}`);
         return youtubeSearchResult.items as YTContentDetails[];

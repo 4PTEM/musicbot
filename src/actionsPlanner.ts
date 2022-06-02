@@ -6,21 +6,19 @@ export interface PlannedAction {
 }
 
 export class EveryDayAction implements PlannedAction {
-    time: string;
-    timeformat: string;
-    remove = false;
+    private time: string;
+    private timeformat: string;
+    public remove = false;
 
-    constructor(time: string, execute: () => void, timeformat = 'HH:mm:ss') {
+    public constructor(time: string, execute: () => void, timeformat = 'HH:mm:ss') {
         this.time = time;
         this.execute = execute;
         this.timeformat = timeformat;
     }
 
-    execute(): void {
+    private execute(): void {}
 
-    }
-
-    process(): void {
+    public process(): void {
         if (moment().format(this.timeformat) == this.time) {
             console.log(`(ACTIONS)[INFO]executing everyday action time: ${this.time}`);
             this.execute();
@@ -31,16 +29,16 @@ export class EveryDayAction implements PlannedAction {
 export class ActionsPlanner {
     private actions: PlannedAction[];
 
-    constructor() {
+    public constructor() {
         this.actions = [];
         setInterval(() => this.processActions(), 1000);
     }
 
-    addAction(action: PlannedAction) {
+    public addAction(action: PlannedAction) {
         this.actions.push(action);
     }
 
-    processActions(): void {
+    private processActions(): void {
         if (!this.actions) return;
         for (let i = 0; i < this.actions.length; i++) {
             const action = this.actions[i];

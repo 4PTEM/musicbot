@@ -16,7 +16,7 @@ export class MusicQueue {
     private currentTrack: BaseTrack | undefined;
     private textChannel: GuildTextBasedChannel;
 
-    constructor(voiceChannel: VoiceBasedChannel, textChannel: GuildTextBasedChannel) {
+    public constructor(voiceChannel: VoiceBasedChannel, textChannel: GuildTextBasedChannel) {
         this.tracks = [];
         this.voiceChannel = voiceChannel;
         this.textChannel = textChannel;
@@ -103,7 +103,7 @@ export class MusicQueue {
     public skipTrack(count = 1): string {
         let skippedTracksNames = '';
         for (let i = 0; i < count; i++) {
-            if(!this.currentTrack) break;
+            if (!this.currentTrack) break;
             skippedTracksNames += this.currentTrack.name + '\n';
             console.log(`(MUSIC)[INFO] Skipped ${this.currentTrack.name} tracks in queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`);
             if (this.tracks.length === 0 || i == count - 1) break;

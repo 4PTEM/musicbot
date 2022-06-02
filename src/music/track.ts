@@ -9,10 +9,10 @@ export interface BaseTrack {
 }
 
 export class Track implements BaseTrack {
-    name: string;
-    triedToReplay = false;
+    public name: string;
+    public triedToReplay = false;
 
-    constructor(name: string) {
+    public constructor(name: string) {
         this.name = name;
     }
 
@@ -27,10 +27,10 @@ export class Track implements BaseTrack {
 }
 
 export class YoutubeTrack {
-    name: string;
-    triedToReplay = false;
+    public name: string;
+    public triedToReplay = false;
 
-    constructor(name: string) {
+    public constructor(name: string) {
         this.name = name;
     }
 

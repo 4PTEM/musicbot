@@ -29,7 +29,7 @@ export class YandexAdapter implements BasePlatformAdapter {
     private trackRegex = /^https:\/\/music\.yandex\.ru\/album\/([^/]*)\/track\/([0-9]*)$/;
     private lastVisit = Date.now() / 1000;
 
-    async parse(argsString: string): Promise<BaseTrack[]> {
+    public async parse(argsString: string): Promise<BaseTrack[]> {
         if (this.linkRegex.test(argsString)) {
             const match = [...argsString.match(this.linkRegex)!];
             const owner = match[1];
@@ -69,7 +69,7 @@ export class YandexAdapter implements BasePlatformAdapter {
         return this.getTracksFromYandexTracks(tracks);
     }
 
-    request(url: string): Promise<Response> {
+    private request(url: string): Promise<Response> {
         const response = fetch(url, {
             headers: {
                 Accept: 'application / json, text/ javascript, */*; q=0.01',
@@ -94,7 +94,7 @@ export class YandexAdapter implements BasePlatformAdapter {
         return response;
     }
 
-    getTracksFromYandexTracks(yandexTracks: yandexTrack[]): BaseTrack[] {
+    private getTracksFromYandexTracks(yandexTracks: yandexTrack[]): BaseTrack[] {
         return yandexTracks.map((track) => {
             let author = track.artists.map((artist) => artist.name).join(', ');
             return new Track(author + ' - ' + track.title);
@@ -142,8 +142,8 @@ export class YouTubeAdapter implements BasePlatformAdapter {
 }
 
 export class Adapter {
-    adapters: Map<string, BasePlatformAdapter>;
-    constructor(adapters: Map<string, BasePlatformAdapter>) {
+    private adapters: Map<string, BasePlatformAdapter>;
+    public constructor(adapters: Map<string, BasePlatformAdapter>) {
         this.adapters = adapters;
     }
 

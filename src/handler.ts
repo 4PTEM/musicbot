@@ -9,18 +9,18 @@ export type Option = {
     required: boolean;
 };
 export class Command {
-    name: string;
-    description: string;
-    options: Option[];
+    public name: string;
+    public description: string;
+    public options: Option[];
 
-    constructor(name: string, description: string, options: Option[], execute: (options: CommandOptions, interaction: CommandInteraction<'cached' | 'raw'>) => void) {
+    public constructor(name: string, description: string, options: Option[], execute: (options: CommandOptions, interaction: CommandInteraction<'cached' | 'raw'>) => void) {
         this.name = name;
         this.execute = execute;
         this.description = description;
         this.options = options;
     }
 
-    buildCommand() {
+    public buildCommand() {
         const builder = new SlashCommandBuilder().setName(this.name).setNameLocalization('en-US', this.name).setDescription(this.description).setDescriptionLocalization('en-US', this.description);
         for (let option of this.options) {
             if (option.type === 'STRING') {
@@ -36,7 +36,7 @@ export class Command {
         return builder;
     }
 
-    equalsTo(command: ApplicationCommand): boolean {
+    public equalsTo(command: ApplicationCommand): boolean {
         if (this.options.length != command.options.length || this.name != command.name || this.description != command.description) {
             return false;
         }
@@ -48,7 +48,7 @@ export class Command {
         return true;
     }
 
-    execute(options: CommandOptions, interaction: CommandInteraction<'cached' | 'raw'>): void {}
+    public execute(options: CommandOptions, interaction: CommandInteraction<'cached' | 'raw'>): void {}
 }
 
 export class Handler {
@@ -57,7 +57,7 @@ export class Handler {
     private queueLock = false;
     private queue: { command: (options: CommandOptions, interaction: CommandInteraction<'cached' | 'raw'>) => void; options: CommandOptions; interaction: CommandInteraction<'cached' | 'raw'> }[] = [];
 
-    constructor(client: Client) {
+    public constructor(client: Client) {
         this.client = client;
         if (!client.application) {
             throw new Error('Bad client');
@@ -82,7 +82,7 @@ export class Handler {
         console.log('(HANDLER)[INFO] Commands initialized');
     }
 
-    async updateApplicationCommands(commands: Command[]): Promise<void> {
+    private async updateApplicationCommands(commands: Command[]): Promise<void> {
         console.log('(HANDLER)[INFO] Updating application commands list');
         const commandCreationRequests: Promise<ApplicationCommand>[] = [];
         const oldCommandsIds = this.client.application!.commands.cache.map((command) => command.id);
@@ -99,7 +99,7 @@ export class Handler {
         });
     }
 
-    async processQueue(): Promise<void> {
+    private async processQueue(): Promise<void> {
         if (this.queueLock || this.queue.length == 0) return;
         this.queueLock = true;
         const { command, options, interaction } = this.queue.shift()!;
@@ -107,7 +107,7 @@ export class Handler {
         this.queueLock = false;
     }
 
-    handleCommand(commandName: string, options: Omit<CommandInteractionOptionResolver, 'getMessage' | 'getFocused'>, interaction: CommandInteraction<'cached' | 'raw'>): void {
+    public handleCommand(commandName: string, options: Omit<CommandInteractionOptionResolver, 'getMessage' | 'getFocused'>, interaction: CommandInteraction<'cached' | 'raw'>): void {
         const command = this.commands.get(commandName);
         if (!command) {
             interaction.reply({ content: 'command not found' });
