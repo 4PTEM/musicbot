@@ -12,7 +12,7 @@ const commands: Command[] = [
     new Command(
         'play',
         'Adds track to a queue',
-        [{ name: 'query', type: 'string', required: true, description: 'search query or url to on of supported music platforms' }],
+        [{ name: 'query', type: 'STRING', required: true, description: 'search query or url to on of supported music platforms' }],
         async (options, interaction) => {
             const tracks: BaseTrack[] = await adapter.parse(options.get('query')!.value as string);
             if (tracks.length > MAX_PLAYLIST_LENGTH) {
@@ -37,7 +37,7 @@ const commands: Command[] = [
             interaction.reply(`Enqueued ${tracks.length} tracks`);
         }
     ),
-    new Command('skip', 'Skips current track', [{ name: 'count', type: 'integer', required: false, description: 'Number of skipped tracks' }], (options, interaction) => {
+    new Command('skip', 'Skips current track', [{ name: 'count', type: 'INTEGER', required: false, description: 'Number of skipped tracks' }], (options, interaction) => {
         const user = interaction.guild!.members.cache.get(interaction.user.id)!;
         const voiceChannel = user.voice.channel;
         if (!voiceChannel) {
@@ -103,8 +103,8 @@ const commands: Command[] = [
         'rm_messages',
         'Removes messages',
         [
-            { name: 'count', type: 'integer', required: false, description: 'Number of removed messages' },
-            { name: 'offset', type: 'integer', required: false, description: 'Offset from last message in channel' },
+            { name: 'count', type: 'INTEGER', required: false, description: 'Number of removed messages' },
+            { name: 'offset', type: 'INTEGER', required: false, description: 'Offset from last message in channel' },
         ],
         async (options, interaction) => {
             if (!interaction.channel) return;

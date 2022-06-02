@@ -5,7 +5,7 @@ export type CommandOptions = Omit<CommandInteractionOptionResolver<CacheType>, '
 export type Option = {
     name: string;
     description: string;
-    type: 'string' | 'boolean' | 'number' | 'integer';
+    type: 'STRING' | 'BOOLEAN' | 'NUMBER' | 'INTEGER';
     required: boolean;
 };
 export class Command {
@@ -23,27 +23,39 @@ export class Command {
     buildCommand() {
         const builder = new SlashCommandBuilder().setName(this.name).setNameLocalization('en-US', this.name).setDescription(this.description).setDescriptionLocalization('en-US', this.description);
         for (let option of this.options) {
-            if (option.type === 'string') {
+            if (option.type === 'STRING') {
                 builder.addStringOption(new SlashCommandStringOption().setName(option.name).setDescription(option.description).setRequired(option.required));
-            } else if (option.type === 'boolean') {
+            } else if (option.type === 'BOOLEAN') {
                 builder.addBooleanOption(new SlashCommandBooleanOption().setName(option.name).setDescription(option.description).setRequired(option.required));
-            } else if (option.type === 'number') {
+            } else if (option.type === 'NUMBER') {
                 builder.addNumberOption(new SlashCommandNumberOption().setName(option.name).setDescription(option.description).setRequired(option.required));
-            } else if (option.type === 'integer') {
+            } else if (option.type === 'INTEGER') {
                 builder.addIntegerOption(new SlashCommandIntegerOption().setName(option.name).setDescription(option.description).setRequired(option.required));
             }
         }
         return builder;
     }
 
+    equalsTo(command: ApplicationCommand): boolean {
+        if (this.options.length != command.options.length || this.name != command.name || this.description != command.description) {
+            return false;
+        }
+        for (let { name, type, description } of this.options) {
+            if (!command.options.some((option) => option.name == name && option.type == type && option.description == description)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     execute(options: CommandOptions, interaction: CommandInteraction<'cached' | 'raw'>): void {}
 }
 
 export class Handler {
-    client: Client;
-    commands: Map<string, Command>;
-    queueLock = false;
-    queue: { command: (options: CommandOptions, interaction: CommandInteraction<'cached' | 'raw'>) => void; options: CommandOptions; interaction: CommandInteraction<'cached' | 'raw'> }[] = [];
+    private client: Client;
+    private commands: Map<string, Command>;
+    private queueLock = false;
+    private queue: { command: (options: CommandOptions, interaction: CommandInteraction<'cached' | 'raw'>) => void; options: CommandOptions; interaction: CommandInteraction<'cached' | 'raw'> }[] = [];
 
     constructor(client: Client) {
         this.client = client;
@@ -51,17 +63,33 @@ export class Handler {
             throw new Error('Bad client');
         }
         this.commands = new Map();
+        setInterval(() => this.processQueue(), 300);
     }
 
-    async initCommands(commands: Command[]): Promise<void> {
+    public async initCommands(commands: Command[]): Promise<void> {
+        const clientCommands = this.client.application!.commands.cache;
+        let commandsUpdatingProcess: Promise<void> | undefined;
+        if (commands.length != clientCommands.size) {
+            commandsUpdatingProcess = this.updateApplicationCommands(commands);
+        }
+        for (const command of commands) {
+            if (!commandsUpdatingProcess && !clientCommands.some((clientCommand) => command.equalsTo(clientCommand))) {
+                commandsUpdatingProcess = this.updateApplicationCommands(commands);
+            }
+            this.commands.set(command.name, command);
+        }
+        await commandsUpdatingProcess;
+        console.log('(HANDLER)[INFO] Commands initialized');
+    }
+
+    async updateApplicationCommands(commands: Command[]): Promise<void> {
+        console.log('(HANDLER)[INFO] Updating application commands list');
         const commandCreationRequests: Promise<ApplicationCommand>[] = [];
         const oldCommandsIds = this.client.application!.commands.cache.map((command) => command.id);
         for (const command of commands) {
             //@ts-ignore
             commandCreationRequests.push(this.client.application.commands.create(command.buildCommand()));
-            this.commands.set(command.name, command);
         }
-        console.log('Updating commands list');
         const createdCommands = await Promise.all(commandCreationRequests);
         const createdCommandsIds = createdCommands.map((command) => command.id);
         oldCommandsIds.forEach((id) => {
@@ -69,8 +97,6 @@ export class Handler {
                 this.client.application?.commands.delete(id);
             }
         });
-        setInterval(() => this.processQueue(), 300);
-        console.log('Bot is ready');
     }
 
     async processQueue(): Promise<void> {
