@@ -11,7 +11,7 @@ setInterval(() => {
     for (let memoryForProcess of Object.values(process.memoryUsage())) {
         totalMemoryUsage += memoryForProcess;
     }
-    if (totalMemoryUsage / 1000000 > 600) {
+    if (totalMemoryUsage / 1000000 > 1000) {
         console.log(
             ' !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n',
             '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n',
@@ -29,6 +29,7 @@ client.on('ready', async () => {
     console.log(`Logged in as ${client.user.tag}!`);
     const handler = new Handler(client);
     await handler.initCommands(commands);
+
     client.on('interactionCreate', async (interaction) => {
         if (!client.user) throw new Error('No client user');
         const { channel } = interaction;
@@ -38,6 +39,9 @@ client.on('ready', async () => {
         }
         handler.handleCommand(interaction.commandName, interaction.options, interaction);
     });
+    for (let [id, command] of await client.application!.commands.fetch()) {
+        console.log(command.name, command.descriptionLocalizations);
+    }
 });
 
 client.login(BOT_TOKEN);

@@ -17,12 +17,6 @@ export type Description = {
 
 export type CommandOption = SlashCommandStringOption | SlashCommandBooleanOption | SlashCommandNumberOption | SlashCommandIntegerOption;
 
-function addDescriptionLocalizations(commandOption: CommandOption | SlashCommandBuilder, description: Description) {
-    for (const [locale, localization] of Object.entries(description.localizations)) {
-        commandOption.setDescriptionLocalization(locale as LocaleString, localization);
-    }
-}
-
 export class Command {
     public name: string;
     public description: Description;
@@ -36,24 +30,24 @@ export class Command {
     }
 
     public buildCommand() {
-        const builder = new SlashCommandBuilder().setName(this.name).setDescription(this.description.default);
+        const builder = new SlashCommandBuilder().setName(this.name).setNameLocalizations(null).setDescription(this.description.default).setDescriptionLocalizations(this.description.localizations);
         for (let option of this.options) {
             let commandOption: CommandOption;
             if (option.type === 'STRING') {
                 commandOption = new SlashCommandStringOption().setName(option.name).setDescription(option.description.default).setRequired(option.required);
-                addDescriptionLocalizations(commandOption, this.description);
+                commandOption.setDescriptionLocalizations(option.description.localizations);
                 builder.addStringOption(commandOption);
             } else if (option.type === 'BOOLEAN') {
                 commandOption = new SlashCommandBooleanOption().setName(option.name).setDescription(option.description.default).setRequired(option.required);
-                addDescriptionLocalizations(commandOption, this.description);
+                commandOption.setDescriptionLocalizations(option.description.localizations);
                 builder.addBooleanOption(commandOption);
             } else if (option.type === 'NUMBER') {
                 let commandOption = new SlashCommandNumberOption().setName(option.name).setDescription(option.description.default).setRequired(option.required);
-                addDescriptionLocalizations(commandOption, this.description);
+                commandOption.setDescriptionLocalizations(option.description.localizations);
                 builder.addNumberOption(commandOption);
             } else if (option.type === 'INTEGER') {
                 let commandOption = new SlashCommandIntegerOption().setName(option.name).setDescription(option.description.default).setRequired(option.required);
-                addDescriptionLocalizations(commandOption, this.description);
+                commandOption.setDescriptionLocalizations(option.description.localizations);
                 builder.addIntegerOption(commandOption);
             }
         }
@@ -108,16 +102,15 @@ export class Handler {
 
     private async updateApplicationCommands(commands: Command[]): Promise<void> {
         console.log('(HANDLER)[INFO] Updating application commands list');
-        const commandCreationRequests: Promise<ApplicationCommand>[] = [];
         const oldCommandsIds = this.client.application!.commands.cache.map((command) => command.id);
+        const newCommandsIds: string[] = [];
         for (const command of commands) {
             //@ts-ignore
-            commandCreationRequests.push(this.client.application.commands.create(command.buildCommand()));
+            const newCommand = await (this.client.application!.commands.create(command.buildCommand()))
+            newCommandsIds.push(newCommand.id);
         }
-        const createdCommands = await Promise.all(commandCreationRequests);
-        const createdCommandsIds = createdCommands.map((command) => command.id);
         oldCommandsIds.forEach((id) => {
-            if (!createdCommandsIds.includes(id)) {
+            if (!newCommandsIds.includes(id)) {
                 this.client.application?.commands.delete(id);
             }
         });

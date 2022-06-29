@@ -3,7 +3,7 @@ import { MAX_PLAYLIST_LENGTH } from './constants';
 import { Command } from './handler';
 import { MusicQueue } from './music/musicQueue';
 import { MusicQueueManager } from './music/musicQueueManager';
-import { BaseTrack } from './music/track';
+import { BaseTrack, YoutubeTrack } from './music/track';
 
 const adapter = new Adapter(adapters);
 const musicQueueManager = new MusicQueueManager();
@@ -199,8 +199,16 @@ const commands: Command[] = [
             interaction.reply(`Deleted ${count} message(s) after ${offset} message from the last one`);
         }
     ),
-    /*
-    new Command('shpingalop', 'Lopaet shpingaleti', [], async (options, interaction) => {
+    new Command(
+        'shpingalop',
+        {
+            default: 'Lopaet  shpingaleti',
+            localizations: {
+                'ru': 'Лопает шпингалеты'
+            }
+        },
+        [],
+        async (options, interaction) => {
             const user = interaction.guild!.members.cache.get(interaction.user.id)!;
             const voiceChannel = user.voice.channel;
             if (!voiceChannel) {
@@ -215,7 +223,6 @@ const commands: Command[] = [
             interaction.reply('Шпингалеты лопнули');
         }
     )
-    */
 ];
 
 export { commands };
