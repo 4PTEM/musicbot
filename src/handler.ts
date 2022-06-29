@@ -1,19 +1,34 @@
-import { SlashCommandBooleanOption, SlashCommandBuilder, SlashCommandIntegerOption, SlashCommandNumberOption, SlashCommandStringOption } from '@discordjs/builders';
+import { SlashCommandBooleanOption, SlashCommandBuilder, SlashCommandIntegerOption, SlashCommandNumberOption, SlashCommandOptionsOnlyBuilder, SlashCommandStringOption } from '@discordjs/builders';
 import { ApplicationCommand, CacheType, Client, CommandInteraction, CommandInteractionOptionResolver } from 'discord.js';
+import { LocaleString } from './locale';
 
 export type CommandOptions = Omit<CommandInteractionOptionResolver<CacheType>, 'getMessage' | 'getFocused'>;
 export type Option = {
     name: string;
-    description: string;
+    description: Description;
     type: 'STRING' | 'BOOLEAN' | 'NUMBER' | 'INTEGER';
     required: boolean;
 };
+
+export type Description = {
+    default: string,
+    localizations: { [k in LocaleString]?: string }
+}
+
+export type CommandOption = SlashCommandStringOption | SlashCommandBooleanOption | SlashCommandNumberOption | SlashCommandIntegerOption;
+
+function addDescriptionLocalizations(commandOption: CommandOption | SlashCommandBuilder, description: Description) {
+    for (const [locale, localization] of Object.entries(description.localizations)) {
+        commandOption.setDescriptionLocalization(locale as LocaleString, localization);
+    }
+}
+
 export class Command {
     public name: string;
-    public description: string;
+    public description: Description;
     public options: Option[];
 
-    public constructor(name: string, description: string, options: Option[], execute: (options: CommandOptions, interaction: CommandInteraction<'cached' | 'raw'>) => void) {
+    public constructor(name: string, description: Description, options: Option[], execute: (options: CommandOptions, interaction: CommandInteraction<'cached' | 'raw'>) => void) {
         this.name = name;
         this.execute = execute;
         this.description = description;
@@ -21,34 +36,43 @@ export class Command {
     }
 
     public buildCommand() {
-        const builder = new SlashCommandBuilder().setName(this.name).setNameLocalization('en-US', this.name).setDescription(this.description).setDescriptionLocalization('en-US', this.description);
+        const builder = new SlashCommandBuilder().setName(this.name).setDescription(this.description.default);
         for (let option of this.options) {
+            let commandOption: CommandOption;
             if (option.type === 'STRING') {
-                builder.addStringOption(new SlashCommandStringOption().setName(option.name).setDescription(option.description).setRequired(option.required));
+                commandOption = new SlashCommandStringOption().setName(option.name).setDescription(option.description.default).setRequired(option.required);
+                addDescriptionLocalizations(commandOption, this.description);
+                builder.addStringOption(commandOption);
             } else if (option.type === 'BOOLEAN') {
-                builder.addBooleanOption(new SlashCommandBooleanOption().setName(option.name).setDescription(option.description).setRequired(option.required));
+                commandOption = new SlashCommandBooleanOption().setName(option.name).setDescription(option.description.default).setRequired(option.required);
+                addDescriptionLocalizations(commandOption, this.description);
+                builder.addBooleanOption(commandOption);
             } else if (option.type === 'NUMBER') {
-                builder.addNumberOption(new SlashCommandNumberOption().setName(option.name).setDescription(option.description).setRequired(option.required));
+                let commandOption = new SlashCommandNumberOption().setName(option.name).setDescription(option.description.default).setRequired(option.required);
+                addDescriptionLocalizations(commandOption, this.description);
+                builder.addNumberOption(commandOption);
             } else if (option.type === 'INTEGER') {
-                builder.addIntegerOption(new SlashCommandIntegerOption().setName(option.name).setDescription(option.description).setRequired(option.required));
+                let commandOption = new SlashCommandIntegerOption().setName(option.name).setDescription(option.description.default).setRequired(option.required);
+                addDescriptionLocalizations(commandOption, this.description);
+                builder.addIntegerOption(commandOption);
             }
         }
         return builder;
     }
 
     public equalsTo(command: ApplicationCommand): boolean {
-        if (this.options.length != command.options.length || this.name != command.name || this.description != command.description) {
+        if (this.options.length != command.options.length || this.name != command.name || this.description.default != command.description) {
             return false;
         }
         for (let { name, type, description } of this.options) {
-            if (!command.options.some((option) => option.name == name && option.type == type && option.description == description)) {
+            if (!command.options.some((option) => option.name == name && option.type == type && option.description == description.default)) {
                 return false;
             }
         }
         return true;
     }
 
-    public execute(options: CommandOptions, interaction: CommandInteraction<'cached' | 'raw'>): void {}
+    public execute(options: CommandOptions, interaction: CommandInteraction<'cached' | 'raw'>): void { }
 }
 
 export class Handler {
