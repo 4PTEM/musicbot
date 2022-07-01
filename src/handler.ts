@@ -106,7 +106,7 @@ export class Handler {
         const newCommandsIds: string[] = [];
         for (const command of commands) {
             //@ts-ignore
-            const newCommand = await (this.client.application!.commands.create(command.buildCommand()))
+            const newCommand = await (this.client.application!.commands.create(command.buildCommand()));
             newCommandsIds.push(newCommand.id);
         }
         oldCommandsIds.forEach((id) => {
