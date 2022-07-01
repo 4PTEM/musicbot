@@ -24,7 +24,6 @@ setInterval(() => {
 }, 1000);
 
 client.on('ready', async () => {
-    await client.application?.commands.fetch();
     if (!client.user) throw new Error('authentication error');
     console.log(`Logged in as ${client.user.tag}!`);
     const handler = new Handler(client);
@@ -39,9 +38,6 @@ client.on('ready', async () => {
         }
         handler.handleCommand(interaction.commandName, interaction.options, interaction);
     });
-    for (let [id, command] of await client.application!.commands.fetch()) {
-        console.log(command.name, command.descriptionLocalizations);
-    }
 });
 
 client.login(BOT_TOKEN);

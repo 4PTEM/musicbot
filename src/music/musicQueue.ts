@@ -1,4 +1,4 @@
-import { AudioPlayer, AudioPlayerStatus, createAudioPlayer, entersState, joinVoiceChannel, VoiceConnection, VoiceConnectionDisconnectReason, VoiceConnectionStatus } from '@discordjs/voice';
+import { AudioPlayer, AudioPlayerStatus, createAudioPlayer, entersState, joinVoiceChannel, NoSubscriberBehavior, VoiceConnection, VoiceConnectionDisconnectReason, VoiceConnectionStatus } from '@discordjs/voice';
 import { GuildTextBasedChannel, VoiceBasedChannel } from 'discord.js';
 import { promisify } from 'node:util';
 import { BaseTrack } from './track';
@@ -20,7 +20,7 @@ export class MusicQueue {
         this.tracks = [];
         this.voiceChannel = voiceChannel;
         this.textChannel = textChannel;
-        this.audioPlayer = createAudioPlayer();
+        this.audioPlayer = createAudioPlayer({ behaviors: { noSubscriber: NoSubscriberBehavior.Pause, maxMissedFrames: Infinity } });
         const guild = this.voiceChannel.guild;
         //@ts-ignore
         this.voiceConnection = joinVoiceChannel({ channelId: this.voiceChannel.id, guildId: guild.id, adapterCreator: guild.voiceAdapterCreator });

@@ -61,7 +61,7 @@ const commands: Command[] = [
         },
         [
             {
-                name: 'query', type: 'STRING', required: true, description: {
+                name: 'count', type: 'NUMBER', required: true, description: {
                     default: 'Number of skipped tracks',
                     localizations: {
                         'ru': 'Количество пропускаемых треков'

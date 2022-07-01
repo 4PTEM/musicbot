@@ -1,5 +1,5 @@
-import { SlashCommandBooleanOption, SlashCommandBuilder, SlashCommandIntegerOption, SlashCommandNumberOption, SlashCommandOptionsOnlyBuilder, SlashCommandStringOption } from '@discordjs/builders';
-import { ApplicationCommand, CacheType, Client, CommandInteraction, CommandInteractionOptionResolver } from 'discord.js';
+import { SlashCommandBooleanOption, SlashCommandBuilder, SlashCommandIntegerOption, SlashCommandNumberOption, SlashCommandStringOption } from '@discordjs/builders';
+import { ApplicationCommand, CacheType, Client, Collection, CommandInteraction, CommandInteractionOptionResolver } from 'discord.js';
 import { LocaleString } from './locale';
 
 export type CommandOptions = Omit<CommandInteractionOptionResolver<CacheType>, 'getMessage' | 'getFocused'>;
@@ -85,14 +85,14 @@ export class Handler {
     }
 
     public async initCommands(commands: Command[]): Promise<void> {
-        const clientCommands = this.client.application!.commands.cache;
+        const clientCommands = await this.client.application!.commands.fetch();
         let commandsUpdatingProcess: Promise<void> | undefined;
         if (commands.length != clientCommands.size) {
-            commandsUpdatingProcess = this.updateApplicationCommands(commands);
+            commandsUpdatingProcess = this.updateApplicationCommands(commands, clientCommands);
         }
         for (const command of commands) {
             if (!commandsUpdatingProcess && !clientCommands.some((clientCommand) => command.equalsTo(clientCommand))) {
-                commandsUpdatingProcess = this.updateApplicationCommands(commands);
+                commandsUpdatingProcess = this.updateApplicationCommands(commands, clientCommands);
             }
             this.commands.set(command.name, command);
         }
@@ -100,7 +100,7 @@ export class Handler {
         console.log('(HANDLER)[INFO] Commands initialized');
     }
 
-    private async updateApplicationCommands(commands: Command[]): Promise<void> {
+    private async updateApplicationCommands(commands: Command[], clientCommands: Collection<string, ApplicationCommand>): Promise<void> {
         console.log('(HANDLER)[INFO] Updating application commands list');
         const oldCommandsIds = this.client.application!.commands.cache.map((command) => command.id);
         const newCommandsIds: string[] = [];
