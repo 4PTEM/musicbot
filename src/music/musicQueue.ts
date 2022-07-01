@@ -16,7 +16,7 @@ export class MusicQueue {
     private currentTrack: BaseTrack | undefined;
     private textChannel: GuildTextBasedChannel;
     private disconnectTimeout: NodeJS.Timeout | undefined;
-    private destroyCallback: () => void;
+    private destroyCallback: (() => void) | undefined;
 
     public constructor(voiceChannel: VoiceBasedChannel, textChannel: GuildTextBasedChannel) {
         this.tracks = [];
@@ -87,8 +87,8 @@ export class MusicQueue {
                 console.log(`(MUSIC)[INFO] Played track ${this.currentTrack?.name} in queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`);
                 this.disconnectTimeout = setTimeout(() => {
                     this.voiceConnection.disconnect();
-                    this.destroyCallback();
-                }, 2000);
+                    if(this.destroyCallback) this.destroyCallback();
+                }, Number(process.env.DISCONNECT_TIMEOUT) || 300_000);
                 if (this.repeatTrack && this.currentTrack) {
                     this.tracks.unshift(this.currentTrack);
                     console.log(`(MUSIC)[INFO] Replaying track ${this.currentTrack.name} in queue ${this.voiceChannel.id}`);
