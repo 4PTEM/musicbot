@@ -61,7 +61,7 @@ const commands: Command[] = [
         },
         [
             {
-                name: 'count', type: 'NUMBER', required: true, description: {
+                name: 'count', type: 'NUMBER', required: false, description: {
                     default: 'Number of skipped tracks',
                     localizations: {
                         'ru': 'Количество пропускаемых треков'
@@ -110,7 +110,8 @@ const commands: Command[] = [
             musicQueue.setTextChannel(interaction.channel!);
             musicQueue.repeatCurrentTrack();
             interaction.reply('Current track will be replayed');
-        }),
+        }
+    ),
     new Command(
         'norepeat',
         {
@@ -133,13 +134,14 @@ const commands: Command[] = [
             }
             musicQueue.cancelRepeating();
             interaction.reply('Replay canceled');
-        }),
+        }
+    ),
     new Command(
         'stop',
         {
-            default: 'Stops playback',
+            default: 'Stops playback and clears the queue',
             localizations: {
-                'ru': 'Останавливает воспроизведение'
+                'ru': 'Останавливает воспроизведение и очищает очередь'
             }
         },
         [],
@@ -158,7 +160,64 @@ const commands: Command[] = [
 
             musicQueue.stop();
             interaction.reply('Playback stopped');
-        }),
+        }
+    ),
+    new Command('pause',
+        {
+            default: 'Pauses playback',
+            localizations: {
+                'ru': 'Ставит воспроизведение на пазу'
+            }
+        },
+        [],
+        async (options, interaction) => {
+            const user = interaction.guild!.members.cache.get(interaction.user.id)!;
+            const voiceChannel = user.voice.channel;
+            if (!voiceChannel) {
+                interaction.reply('You should be in a voice channel!');
+                return;
+            }
+            let musicQueue = musicQueueManager.get(String(voiceChannel.id));
+            if (!musicQueue) {
+                interaction.reply('No tracks');
+                return;
+            }
+
+            if(musicQueue.pause()) {
+                interaction.reply('Playback paused');
+                return;
+            }
+            interaction.reply('An error occured');
+        }
+    ),
+    new Command('unpause',
+        {
+            default: 'Unpauses playback',
+            localizations: {
+                'ru': 'Продолжает воспроизведение'
+            }
+        },
+        [],
+        async (options, interaction) => {
+            const user = interaction.guild!.members.cache.get(interaction.user.id)!;
+            const voiceChannel = user.voice.channel;
+            if (!voiceChannel) {
+                interaction.reply('You should be in a voice channel!');
+                return;
+            }
+            let musicQueue = musicQueueManager.get(String(voiceChannel.id));
+            if (!musicQueue) {
+                interaction.reply('No tracks');
+                return;
+            }
+
+            if(musicQueue.unpause()) {
+                interaction.reply('Playback unpaused');
+                return;
+            }
+            interaction.reply('An error occured');
+        }
+    ),
     new Command(
         'rm_messages',
         {

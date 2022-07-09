@@ -87,7 +87,7 @@ export class MusicQueue {
                 console.log(`(MUSIC)[INFO] Played track ${this.currentTrack?.name} in queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`);
                 this.disconnectTimeout = setTimeout(() => {
                     this.voiceConnection.disconnect();
-                    if(this.destroyCallback) this.destroyCallback();
+                    if (this.destroyCallback) this.destroyCallback();
                 }, Number(process.env.DISCONNECT_TIMEOUT) || 300_000);
                 if (this.repeatTrack && this.currentTrack) {
                     this.tracks.unshift(this.currentTrack);
@@ -156,6 +156,14 @@ export class MusicQueue {
     public stop() {
         this.tracks = [];
         this.audioPlayer.stop(true);
+    }
+
+    public pause() {
+        return this.audioPlayer.pause(true);
+    }
+
+    public unpause() {
+        return this.audioPlayer.unpause();
     }
 
     public setTextChannel(textChannel: GuildTextBasedChannel) {
