@@ -219,6 +219,31 @@ const commands: Command[] = [
         }
     ),
     new Command(
+        'queue',
+        {
+            default: 'Shows enqueued tracks',
+            localizations: {
+                'ru': 'Показывает треки в очереди'
+            }
+        },
+        [],
+        async (options, interaction) => {
+            const user = interaction.guild!.members.cache.get(interaction.user.id)!;
+            const voiceChannel = user.voice.channel;
+            if (!voiceChannel) {
+                interaction.reply('You should be in a voice channel!');
+                return;
+            }
+            let musicQueue = musicQueueManager.get(String(voiceChannel.id));
+            if (!musicQueue) {
+                interaction.reply('No tracks');
+                return;
+            }
+
+            interaction.reply(musicQueue.getTracksList());
+        }
+    ),
+    new Command(
         'rm_messages',
         {
             default: 'Removes message(s) (one message by default)',
@@ -256,30 +281,6 @@ const commands: Command[] = [
                 });
             }
             interaction.reply(`Deleted ${count} message(s) after ${offset} message from the last one`);
-        }
-    ),
-    new Command(
-        'shpingalop',
-        {
-            default: 'Lopaet  shpingaleti',
-            localizations: {
-                'ru': 'Лопает шпингалеты'
-            }
-        },
-        [],
-        async (options, interaction) => {
-            const user = interaction.guild!.members.cache.get(interaction.user.id)!;
-            const voiceChannel = user.voice.channel;
-            if (!voiceChannel) {
-                interaction.reply('You should be in a voice channel!');
-                return;
-            }
-            let musicQueue = musicQueueManager.get(String(voiceChannel.id));
-            if (!musicQueue) {
-                musicQueue = musicQueueManager.set(String(voiceChannel.id), new MusicQueue(voiceChannel, interaction.channel!));
-            }
-            musicQueue.enqueue(new YoutubeTrack('https://www.youtube.com/watch?v=WcWnhK9-S7M'));
-            interaction.reply('Шпингалеты лопнули');
         }
     )
 ];

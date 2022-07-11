@@ -6,20 +6,20 @@ import { BaseTrack } from './track';
 const wait = promisify(setTimeout);
 
 export class MusicQueue {
-    private tracks: BaseTrack[];
+    private queue: BaseTrack[];
+    private currentTrackIndex = -1;
     private voiceChannel: VoiceBasedChannel;
     private audioPlayer: AudioPlayer;
     private voiceConnection: VoiceConnection;
     private queueLock = false;
     private readyLock = false;
     private repeatTrack = false;
-    private currentTrack: BaseTrack | undefined;
     private textChannel: GuildTextBasedChannel;
     private disconnectTimeout: NodeJS.Timeout | undefined;
     private destroyCallback: (() => void) | undefined;
 
     public constructor(voiceChannel: VoiceBasedChannel, textChannel: GuildTextBasedChannel) {
-        this.tracks = [];
+        this.queue = [];
         this.voiceChannel = voiceChannel;
         this.textChannel = textChannel;
         this.audioPlayer = createAudioPlayer({ behaviors: { noSubscriber: NoSubscriberBehavior.Pause, maxMissedFrames: Infinity } });
@@ -74,24 +74,24 @@ export class MusicQueue {
 
         this.audioPlayer.on('error', async (error) => {
             console.log(`(MUSIC)[ERROR] Audioplayer error: ${error}`);
-            if (!this.currentTrack) {
+            if (this.queue[this.currentTrackIndex]) {
                 return;
             }
-            console.log(`(MUSIC)[INFO] Skipping track ${this.currentTrack.name} due error`);
+            console.log(`(MUSIC)[INFO] Skipping track ${this.queue[this.currentTrackIndex].name} due error`);
             this.audioPlayer.stop(true);
             return;
         });
 
         this.audioPlayer.on(AudioPlayerStatus.Idle, (oldState, newState) => {
             if (oldState.status === AudioPlayerStatus.Playing) {
-                console.log(`(MUSIC)[INFO] Played track ${this.currentTrack?.name} in queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`);
+                console.log(`(MUSIC)[INFO] Played track ${this.queue[this.currentTrackIndex]?.name} in queue ${this.voiceChannel.id}, current queue length ${this.queue.length}`);
                 this.disconnectTimeout = setTimeout(() => {
                     this.voiceConnection.disconnect();
                     if (this.destroyCallback) this.destroyCallback();
                 }, Number(process.env.DISCONNECT_TIMEOUT) || 300_000);
-                if (this.repeatTrack && this.currentTrack) {
-                    this.tracks.unshift(this.currentTrack);
-                    console.log(`(MUSIC)[INFO] Replaying track ${this.currentTrack.name} in queue ${this.voiceChannel.id}`);
+                if (this.repeatTrack && this.queue[this.currentTrackIndex]) {
+                    this.queue.unshift(this.queue[this.currentTrackIndex]);
+                    console.log(`(MUSIC)[INFO] Replaying track ${this.queue[this.currentTrackIndex].name} in queue ${this.voiceChannel.id}`);
                 }
                 this.processQueue();
             }
@@ -105,44 +105,39 @@ export class MusicQueue {
     }
 
     public enqueue(track: BaseTrack) {
-        this.tracks.push(track);
-        console.log(`(MUSIC)[INFO] Enqueued track ${track.name} to queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`);
+        this.queue.push(track);
+        console.log(`(MUSIC)[INFO] Enqueued track ${track.name} to queue ${this.voiceChannel.id}, current queue length ${this.queue.length}`);
         this.processQueue();
     }
 
     public skipTrack(count = 1): string {
-        let skippedTracksNames = '';
-        for (let i = 0; i < count; i++) {
-            if (!this.currentTrack) break;
-            skippedTracksNames += this.currentTrack.name + '\n';
-            console.log(`(MUSIC)[INFO] Skipped ${this.currentTrack.name} tracks in queue ${this.voiceChannel.id}, current queue length ${this.tracks.length}`);
-            if (this.tracks.length === 0 || i == count - 1) break;
-            this.currentTrack = this.tracks.shift()!;
-        }
+        let skippedTracksNames = this.queue.slice(this.currentTrackIndex, this.currentTrackIndex + count)
+            .map((track) => track.name).join(';\n');
+        this.currentTrackIndex = this.currentTrackIndex + count - 1;
         this.audioPlayer.stop(true);
         return skippedTracksNames;
     }
 
     public repeatCurrentTrack() {
         this.repeatTrack = true;
-        console.log(`(MUSIC)[INFO] Track ${this.currentTrack?.name || ''} will be repeated`);
+        console.log(`(MUSIC)[INFO] Track ${this.queue[this.currentTrackIndex]?.name || ''} will be repeated`);
     }
 
     public cancelRepeating() {
         this.repeatTrack = false;
-        console.log(`(MUSIC)[INFO] Track ${this.currentTrack?.name || ''} will be no more repeated`);
+        console.log(`(MUSIC)[INFO] Track ${this.queue[this.currentTrackIndex]?.name || ''} will be no more repeated`);
     }
 
     private async processQueue(): Promise<void> {
-        if (this.queueLock || this.audioPlayer.state.status !== AudioPlayerStatus.Idle || this.tracks.length === 0) {
+        if (this.queueLock || this.audioPlayer.state.status !== AudioPlayerStatus.Idle || this.queue.length === 0) {
             return;
         }
         this.queueLock = true;
-
-        this.currentTrack = this.tracks.shift()!;
+        
+        this.currentTrackIndex ++;
         try {
-            const audioResource = await this.currentTrack.createAudioResource();
-            this.textChannel.send(`Playing track ${this.currentTrack.name}`);
+            const audioResource = await this.queue[this.currentTrackIndex].createAudioResource();
+            this.textChannel.send(`Playing track ${this.queue[this.currentTrackIndex].name}`);
             this.audioPlayer.play(audioResource);
             clearTimeout(this.disconnectTimeout);
             this.queueLock = false;
@@ -154,7 +149,8 @@ export class MusicQueue {
     }
 
     public stop() {
-        this.tracks = [];
+        this.queue = [];
+        this.currentTrackIndex = -1;
         this.audioPlayer.stop(true);
     }
 
@@ -164,6 +160,14 @@ export class MusicQueue {
 
     public unpause() {
         return this.audioPlayer.unpause();
+    }
+
+    public getTracksList() {
+        if (this.queue.length === 0 && !this.queue[this.currentTrackIndex]) return 'No tracks enqueued';
+        let list = this.queue[this.currentTrackIndex] ? `**Now playing:**\n${this.queue[this.currentTrackIndex].name}\n` : '';
+        list += '**Queue:**\n';
+        this.queue.slice(1).forEach(track => list += `${track.name};\n`);
+        return list;
     }
 
     public setTextChannel(textChannel: GuildTextBasedChannel) {
