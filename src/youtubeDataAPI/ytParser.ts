@@ -27,31 +27,37 @@ type YTVideo = {
     };
 };
 
-type YTContentDetails = {
+type YTPlaylistItem = {
     kind: string;
-    etag: string;
-    contentDetails: {
-        kind: string;
-        videoId: string;
-    };
+    snippet: {
+        resourceId: {
+            kind: string,
+            videoId: string
+        },
+        title: string
+    }
 };
 
 class YTParser {
     public async searchVideo(name: string): Promise<YTVideo> {
         const queryParams = `part=id&maxResults=20&q=${encodeURI(name)}`;
 
-        let youtubeSearchResult = await (await fetch(`https://www.googleapis.com/youtube/v3/search?${queryParams}&key=${API_KEY}`)).json();
+        let youtubeSearchResult = await this.request(`https://www.googleapis.com/youtube/v3/search?${queryParams}`);
         while (youtubeSearchResult?.error?.code === 403) {
             refreshApiKey();
-            youtubeSearchResult = await (await fetch(`https://www.googleapis.com/youtube/v3/search?${queryParams}&key=${API_KEY}`)).json();
+            youtubeSearchResult = await this.request(`https://www.googleapis.com/youtube/v3/search?${queryParams}`);
         }
         return youtubeSearchResult.items.find((item: YTVideo) => item.id.kind == 'youtube#video');
     }
 
-    public async getPlaylistItems(id: string): Promise<YTContentDetails[]> {
-        const queryParams = `part=contentDetails&maxResults=${MAX_PLAYLIST_LENGTH + 1}&playlistId=${encodeURI(id)}`;
+    public async getVideoTitle(id: string): Promise<string> {
+        return (await this.request(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${id}`))?.title;
+    }
+
+    public async getPlaylistItems(id: string): Promise<YTPlaylistItem[]> {
+        const queryParams = `part=snippet&maxResults=${MAX_PLAYLIST_LENGTH + 1}&playlistId=${encodeURI(id)}`;
         const youtubeSearchResult = await this.request(`https://www.googleapis.com/youtube/v3/playlistItems?${queryParams}`);
-        return youtubeSearchResult.items as YTContentDetails[];
+        return youtubeSearchResult.items as YTPlaylistItem[];
     }
 
     private async request(url: string): Promise<any> {

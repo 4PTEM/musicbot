@@ -135,6 +135,7 @@ export class MusicQueue {
         this.queueLock = true;
         
         this.currentTrackIndex ++;
+        if (!this.queue[this.currentTrackIndex]) return;
         try {
             const audioResource = await this.queue[this.currentTrackIndex].createAudioResource();
             this.textChannel.send(`Playing track ${this.queue[this.currentTrackIndex].name}`);
@@ -166,7 +167,10 @@ export class MusicQueue {
         if (this.queue.length === 0 && !this.queue[this.currentTrackIndex]) return 'No tracks enqueued';
         let list = this.queue[this.currentTrackIndex] ? `**Now playing:**\n${this.queue[this.currentTrackIndex].name}\n` : '';
         list += '**Queue:**\n';
-        this.queue.slice(1).forEach(track => list += `${track.name};\n`);
+        this.queue.slice(1, 16).forEach(track => list += `${track.name};\n`);
+        if(this.queue.length > 15) {
+            list += `...(and ${this.queue.length - 16} more tracks)`;
+        }
         return list;
     }
 

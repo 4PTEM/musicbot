@@ -3,13 +3,15 @@ import ytdl from 'ytdl-core';
 import { youTubeParser } from '../youtubeDataAPI/ytParser';
 
 export interface BaseTrack {
-    name: string;
+    name?: string;
+    link?: string;
     triedToReplay: boolean;
     createAudioResource(start?: number): Promise<AudioResource>;
 }
 
 export class Track implements BaseTrack {
     public name: string;
+    public link?: string;
     public triedToReplay = false;
 
     public constructor(name: string) {
@@ -17,8 +19,8 @@ export class Track implements BaseTrack {
     }
 
     public async createAudioResource(): Promise<AudioResource> {
-        const videoId = (await youTubeParser.searchVideo(this.name)).id.videoId;
-        const audioStream = ytdl(`https://www.youtube.com/watch?v=${videoId}`, {
+        this.link = (await youTubeParser.searchVideo(this.name)).id.videoId;
+        const audioStream = ytdl(this.link, {
             quality: 'highestaudio',
             filter: 'audioonly',
         });
@@ -27,15 +29,17 @@ export class Track implements BaseTrack {
 }
 
 export class YoutubeTrack {
-    public name: string;
+    public name?: string;
+    public link: string;
     public triedToReplay = false;
 
-    public constructor(name: string) {
-        this.name = name;
+    public constructor(link: string, name: string) {
+        this.link = link;
+        this.name = name
     }
 
     public async createAudioResource(): Promise<AudioResource> {
-        const audioStream = ytdl(this.name, {
+        const audioStream = ytdl(this.link, {
             quality: 'highestaudio',
             filter: 'audioonly',
         });
