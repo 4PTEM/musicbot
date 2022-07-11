@@ -18,7 +18,7 @@ function refreshApiKey() {
     API_KEY = API_KEYS[CURRENT_KEY_INDEX];
 }
 
-type YTVideo = {
+export type YTVideo = {
     kind: string;
     etag: string;
     id: {
@@ -27,7 +27,7 @@ type YTVideo = {
     };
 };
 
-type YTPlaylistItem = {
+export type YTPlaylistItem = {
     kind: string;
     snippet: {
         resourceId: {
@@ -51,7 +51,9 @@ class YTParser {
     }
 
     public async getVideoTitle(id: string): Promise<string> {
-        return (await this.request(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${id}`))?.title;
+        const title = (await this.request(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${id}`))?.title;
+        console.log(title);
+        return title;
     }
 
     public async getPlaylistItems(id: string): Promise<YTPlaylistItem[]> {
