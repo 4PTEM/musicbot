@@ -78,12 +78,14 @@ const commands: Command[] = [
             }
             let musicQueue = musicQueueManager.get(String(voiceChannel.id));
             if (!musicQueue) {
+                interaction.reply('No tracks in queue');
                 return;
             }
             musicQueue.setTextChannel(interaction.channel!);
 
             let count = Number(options.get('count')?.value) || 1;
             const skippedTracksList = musicQueue.skipTrack(count);
+            if(!skippedTracksList) interaction.reply('No tracks in queue');
             interaction.reply(`Skipped tracks: \n${skippedTracksList}`);
         }
     ),
