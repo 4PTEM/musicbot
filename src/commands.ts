@@ -85,7 +85,7 @@ const commands: Command[] = [
 
             let count = Number(options.get('count')?.value) || 1;
             const skippedTracksList = musicQueue.skipTrack(count);
-            if(!skippedTracksList) interaction.reply('No tracks in queue');
+            if (!skippedTracksList) interaction.reply('No tracks in queue');
             interaction.reply(`Skipped tracks: \n${skippedTracksList}`);
         }
     ),
@@ -185,7 +185,7 @@ const commands: Command[] = [
                 return;
             }
 
-            if(musicQueue.pause()) {
+            if (musicQueue.pause()) {
                 interaction.reply('Playback paused');
                 return;
             }
@@ -213,7 +213,7 @@ const commands: Command[] = [
                 return;
             }
 
-            if(musicQueue.unpause()) {
+            if (musicQueue.unpause()) {
                 interaction.reply('Playback unpaused');
                 return;
             }
@@ -277,12 +277,15 @@ const commands: Command[] = [
             let count = Number(options.get('count')?.value) || 1;
             let offset = Number(options.get('offset')?.value) || 0;
             if (offset + count > messages.size) count = messages.size - offset;
+            interaction.reply(`Deleting ${count} message(s) after ${offset} message from the last one...\n(it can take a minute)`);
             for (let i = offset; i < count + offset; i++) {
-                channel.messages.delete(messages.at(i)!).catch((error) => {
-                    console.log(`(RM_MESSAGES)[Error] Falied to delete message. ${error.message}`);
-                });
+                try {
+                    await channel.messages.delete(messages.at(i)!);
+                } catch(e) {
+                    channel.send('No permission for message managing');
+                    break;
+                }
             }
-            interaction.reply(`Deleted ${count} message(s) after ${offset} message from the last one`);
         }
     )
 ];
