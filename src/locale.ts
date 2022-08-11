@@ -28,6 +28,6 @@ export enum Locale {
     Thai = 'th',
     Turkish = 'tr',
     Ukrainian = 'uk',
-    Vietnamese = 'vi'
+    Vietnamese = 'vi',
 }
 export type LocaleString = `${Locale}`;

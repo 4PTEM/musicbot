@@ -11,9 +11,9 @@ export type Option = {
 };
 
 export type Description = {
-    default: string,
-    localizations: { [k in LocaleString]?: string }
-}
+    default: string;
+    localizations: { [k in LocaleString]?: string };
+};
 
 export type CommandOption = SlashCommandStringOption | SlashCommandBooleanOption | SlashCommandNumberOption | SlashCommandIntegerOption;
 
@@ -66,7 +66,7 @@ export class Command {
         return true;
     }
 
-    public execute(options: CommandOptions, interaction: CommandInteraction<'cached' | 'raw'>): void { }
+    public execute(options: CommandOptions, interaction: CommandInteraction<'cached' | 'raw'>): void {}
 }
 
 export class Handler {
@@ -106,7 +106,7 @@ export class Handler {
         const newCommandsIds: string[] = [];
         for (const command of commands) {
             //@ts-ignore
-            const newCommand = await (this.client.application!.commands.create(command.buildCommand()));
+            const newCommand = await this.client.application!.commands.create(command.buildCommand());
             newCommandsIds.push(newCommand.id);
         }
         oldCommandsIds.forEach((id) => {

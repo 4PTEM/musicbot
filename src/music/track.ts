@@ -5,14 +5,12 @@ import { youTubeParser } from '../youtubeDataAPI/ytParser';
 export interface BaseTrack {
     name?: string;
     link?: string;
-    triedToReplay: boolean;
     createAudioResource(start?: number): Promise<AudioResource>;
 }
 
 export class Track implements BaseTrack {
     public name: string;
     public link?: string;
-    public triedToReplay = false;
 
     public constructor(name: string) {
         this.name = name;
@@ -31,11 +29,10 @@ export class Track implements BaseTrack {
 export class YoutubeTrack {
     public name?: string;
     public link: string;
-    public triedToReplay = false;
 
     public constructor(link: string, name: string) {
         this.link = link;
-        this.name = name
+        this.name = name;
     }
 
     public async createAudioResource(): Promise<AudioResource> {

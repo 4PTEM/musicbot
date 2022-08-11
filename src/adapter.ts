@@ -116,14 +116,14 @@ export class YouTubeAdapter implements BasePlatformAdapter {
     }
 
     private async parseVideo(link: string): Promise<BaseTrack[]> {
-        const name = await youTubeParser.getVideoTitle(link.match(/v=([A-z0-9-_]*)/)![1])
+        const name = await youTubeParser.getVideoTitle(link.match(/v=([A-z0-9-_]*)/)![1]);
         return [new YoutubeTrack(link, name)];
     }
 
-    private async getTracksFromPlaylist(playlist: YTPlaylistItem[], params: { videoId?: string, index?: number }): Promise<BaseTrack[]> {
+    private async getTracksFromPlaylist(playlist: YTPlaylistItem[], params: { videoId?: string; index?: number }): Promise<BaseTrack[]> {
         let { videoId, index } = params;
         if (!index) {
-            index = playlist.findIndex(item => item.snippet.resourceId.videoId == videoId);
+            index = playlist.findIndex((item) => item.snippet.resourceId.videoId == videoId);
         }
         const tracks = playlist.slice(index).map((video) => {
             return new YoutubeTrack(`https://www.youtube.com/watch?v=${video.snippet.resourceId.videoId}`, video.snippet.title);
@@ -142,11 +142,11 @@ export class YouTubeAdapter implements BasePlatformAdapter {
         }
 
         const id = idRegexMatch[1];
-        const playlist = (await youTubeParser.getPlaylistItems(id));
+        const playlist = await youTubeParser.getPlaylistItems(id);
         const videoId = videoIdRegexMatch ? videoIdRegexMatch[1] : undefined;
         const index = videoIndexRegexMatch ? Number(videoIndexRegexMatch[1]) - 1 : undefined;
 
-        return this.getTracksFromPlaylist(playlist, { videoId, index })
+        return this.getTracksFromPlaylist(playlist, { videoId, index });
     }
 }
 
@@ -162,7 +162,8 @@ export class Adapter {
         } else if (argsString.startsWith('https://www.youtube.com')) {
             return await this.adapters.get('youtube')!.parse(argsString);
         }
-        return [new Track(argsString)];
+        const searchedTrack = await youTubeParser.searchVideo(argsString);
+        return [new YoutubeTrack(searchedTrack.id.videoId, searchedTrack.snippet.title)];
     }
 }
 

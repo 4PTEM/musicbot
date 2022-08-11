@@ -1,4 +1,14 @@
-import { AudioPlayer, AudioPlayerStatus, createAudioPlayer, entersState, joinVoiceChannel, NoSubscriberBehavior, VoiceConnection, VoiceConnectionDisconnectReason, VoiceConnectionStatus } from '@discordjs/voice';
+import {
+    AudioPlayer,
+    AudioPlayerStatus,
+    createAudioPlayer,
+    entersState,
+    joinVoiceChannel,
+    NoSubscriberBehavior,
+    VoiceConnection,
+    VoiceConnectionDisconnectReason,
+    VoiceConnectionStatus,
+} from '@discordjs/voice';
 import { GuildTextBasedChannel, VoiceBasedChannel } from 'discord.js';
 import { promisify } from 'node:util';
 import { BaseTrack } from './track';
@@ -111,8 +121,10 @@ export class MusicQueue {
     }
 
     public skipTrack(count = 1): string {
-        let skippedTracksNames = this.queue.slice(this.currentTrackIndex, this.currentTrackIndex + count)
-            .map((track) => track.name).join(';\n');
+        let skippedTracksNames = this.queue
+            .slice(this.currentTrackIndex, this.currentTrackIndex + count)
+            .map((track) => track.name)
+            .join(';\n');
         this.currentTrackIndex = this.currentTrackIndex + count - 1;
         this.audioPlayer.stop(true);
         return skippedTracksNames;
@@ -133,8 +145,8 @@ export class MusicQueue {
             return;
         }
         this.queueLock = true;
-        
-        this.currentTrackIndex ++;
+
+        this.currentTrackIndex++;
         if (!this.queue[this.currentTrackIndex]) return;
         try {
             const audioResource = await this.queue[this.currentTrackIndex].createAudioResource();
@@ -167,8 +179,8 @@ export class MusicQueue {
         if (this.queue.length === 0 && !this.queue[this.currentTrackIndex]) return 'No tracks enqueued';
         let list = this.queue[this.currentTrackIndex] ? `**Now playing:**\n${this.queue[this.currentTrackIndex].name}\n` : '';
         list += '**Queue:**\n';
-        this.queue.slice(1, 16).forEach(track => list += `${track.name};\n`);
-        if(this.queue.length > 15) {
+        this.queue.slice(1, 16).forEach((track) => (list += `${track.name};\n`));
+        if (this.queue.length > 15) {
             list += `...(and ${this.queue.length - 16} more tracks)`;
         }
         return list;

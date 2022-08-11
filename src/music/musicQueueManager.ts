@@ -12,7 +12,9 @@ export class MusicQueueManager {
     }
 
     public set(key: string, queue: MusicQueue): MusicQueue {
-        queue.setDestroyCallback(() => { this.queues.delete(key); });
+        queue.setDestroyCallback(() => {
+            this.queues.delete(key);
+        });
         this.queues.set(key, queue);
         return queue;
     }

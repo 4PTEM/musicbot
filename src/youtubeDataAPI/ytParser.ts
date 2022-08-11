@@ -19,11 +19,21 @@ function refreshApiKey() {
 }
 
 export type YTVideo = {
-    kind: string;
+    kind: 'youtube#searchResult' | 'youtube#video';
     etag: string;
     id: {
-        kind: string;
+        kind: 'youtube#video';
         videoId: string;
+    };
+    snippet: {
+        publishedAt: string;
+        channelId: string;
+        title: string;
+        description: string;
+        thumbnails: any;
+        channelTitle: string;
+        liveBroadcastContent: 'none' | 'live' | 'upcoming';
+        publishTime: string;
     };
 };
 
@@ -31,28 +41,28 @@ export type YTPlaylistItem = {
     kind: string;
     snippet: {
         resourceId: {
-            kind: string,
-            videoId: string
-        },
-        title: string
-    }
+            kind: string;
+            videoId: string;
+        };
+        title: string;
+    };
 };
 
 class YTParser {
     public async searchVideo(name: string): Promise<YTVideo> {
-        const queryParams = `part=id&maxResults=20&q=${encodeURI(name)}`;
+        const queryParams = `part=id&part=snippet&safeSearch=none&type=videomaxResults=100&q=${encodeURI(name)}`;
 
         let youtubeSearchResult = await this.request(`https://www.googleapis.com/youtube/v3/search?${queryParams}`);
         while (youtubeSearchResult?.error?.code === 403) {
             refreshApiKey();
             youtubeSearchResult = await this.request(`https://www.googleapis.com/youtube/v3/search?${queryParams}`);
         }
-        return youtubeSearchResult.items.find((item: YTVideo) => item.id.kind == 'youtube#video');
+        return youtubeSearchResult.items[0];
     }
 
     public async getVideoTitle(id: string): Promise<string> {
-        const title = (await this.request(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${id}`))?.title;
-        console.log(title);
+        const ytResponse = await this.request(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${id}`);
+        const title = ytResponse?.items[0]?.snippet?.title;
         return title;
     }
 
