@@ -163,7 +163,7 @@ export class Adapter {
             return await this.adapters.get('youtube')!.parse(argsString);
         }
         const searchedTrack = await youTubeParser.searchVideo(argsString);
-        return [new YoutubeTrack(searchedTrack.id.videoId, searchedTrack.snippet.title)];
+        return [new YoutubeTrack(`https://www.youtube.com/watch?v=${searchedTrack.id.videoId}`, searchedTrack.snippet.title)];
     }
 }
 
