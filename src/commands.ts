@@ -3,7 +3,7 @@ import { MAX_PLAYLIST_LENGTH } from './constants';
 import { Command } from './handler';
 import { MusicQueue } from './music/musicQueue';
 import { MusicQueueManager } from './music/musicQueueManager';
-import { BaseTrack, YoutubeTrack } from './music/track';
+import { BaseTrack } from './music/track';
 
 const adapter = new Adapter(adapters);
 const musicQueueManager = new MusicQueueManager();
@@ -84,9 +84,8 @@ const commands: Command[] = [
             musicQueue.setTextChannel(interaction.channel!);
 
             let count = Number(options.get('count')?.value) || 1;
-            const skippedTracksList = musicQueue.skipTrack(count);
-            if (!skippedTracksList) interaction.reply('No tracks in queue');
-            interaction.reply(`Skipped tracks: \n${skippedTracksList}`);
+            const skipedCount = musicQueue.skipTrack(count);
+            interaction.reply(`Skipped ${skipedCount} track(s)`);
         }
     ),
     new Command(
@@ -291,3 +290,4 @@ const commands: Command[] = [
 ];
 
 export { commands };
+

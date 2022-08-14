@@ -120,7 +120,11 @@ export class Handler {
         if (this.queueLock || this.queue.length == 0) return;
         this.queueLock = true;
         const { command, options, interaction } = this.queue.shift()!;
-        await command(options, interaction);
+        try {
+            await command(options, interaction);
+        } catch (e) {
+            console.log(e);
+        }
         this.queueLock = false;
     }
 

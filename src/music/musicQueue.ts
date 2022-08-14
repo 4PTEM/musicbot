@@ -120,14 +120,13 @@ export class MusicQueue {
         this.processQueue();
     }
 
-    public skipTrack(count = 1): string {
-        let skippedTracksNames = this.queue
-            .slice(this.currentTrackIndex, this.currentTrackIndex + count)
-            .map((track) => track.name)
-            .join(';\n');
-        this.currentTrackIndex = this.currentTrackIndex + count - 1;
+    public skipTrack(count = 1): number {
+        if(this.currentTrackIndex + count > this.queue.length) {
+            count = this.currentTrackIndex - this.queue.length;
+        }
+        this.currentTrackIndex += count - 1;
         this.audioPlayer.stop(true);
-        return skippedTracksNames;
+        return count;
     }
 
     public repeatCurrentTrack() {
