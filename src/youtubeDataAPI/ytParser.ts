@@ -50,7 +50,7 @@ export type YTPlaylistItem = {
 
 class YTParser {
     public async searchVideo(name: string): Promise<YTVideo> {
-        const queryParams = `part=id&part=snippet&safeSearch=none&type=videomaxResults=100&q=${encodeURI(name)}`;
+        const queryParams = `part=id&part=snippet&safeSearch=none&type=video&maxResults=100&q=${encodeURI(name)}`;
 
         let youtubeSearchResult = await this.request(`https://www.googleapis.com/youtube/v3/search?${queryParams}`);
         while (youtubeSearchResult?.error?.code === 403) {
