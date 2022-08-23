@@ -137,7 +137,7 @@ export class YouTubeAdapter implements BasePlatformAdapter {
         const videoIdRegexMatch = link.match(/v=([A-z0-9-_]*)/);
 
         if (!idRegexMatch) {
-            console.log(`(ADAPTER)[NOTICE] Invalid data passed for youtube playlist link`);
+            console.log('(ADAPTER)[NOTICE] Invalid data passed for youtube playlist link');
             return [];
         }
 

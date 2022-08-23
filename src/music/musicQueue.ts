@@ -121,7 +121,7 @@ export class MusicQueue {
     }
 
     public skipTrack(count = 1): number {
-        if(this.currentTrackIndex + count > this.queue.length) {
+        if (this.currentTrackIndex + count > this.queue.length) {
             count = this.currentTrackIndex - this.queue.length;
         }
         this.currentTrackIndex += count - 1;
@@ -145,8 +145,8 @@ export class MusicQueue {
         }
         this.queueLock = true;
 
+        if (!this.queue[this.currentTrackIndex + 1]) return;
         this.currentTrackIndex++;
-        if (!this.queue[this.currentTrackIndex]) return;
         try {
             const audioResource = await this.queue[this.currentTrackIndex].createAudioResource();
             this.textChannel.send(`Playing track ${this.queue[this.currentTrackIndex].name}`);
