@@ -39,6 +39,7 @@ const commands: Command[] = [
                 interaction.reply('You should be in a voice channel!');
                 return;
             }
+
             let musicQueue = musicQueueManager.get(String(voiceChannel.id));
             if (!musicQueue) {
                 musicQueue = musicQueueManager.set(String(voiceChannel.id), new MusicQueue(voiceChannel, interaction.channel!));

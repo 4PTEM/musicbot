@@ -43,17 +43,20 @@ export class MusicQueue {
                     await entersState(this.voiceConnection, VoiceConnectionStatus.Connecting, 5_000);
                 } catch {
                     this.voiceConnection.destroy();
+                    if (this.destroyCallback) this.destroyCallback();
                 }
             } else if (this.voiceConnection.rejoinAttempts < 5) {
                 await wait((this.voiceConnection.rejoinAttempts + 1) * 5_000);
                 this.voiceConnection.rejoin();
             } else {
                 this.voiceConnection.destroy();
+                if (this.destroyCallback) this.destroyCallback();
             }
         });
 
         this.voiceConnection.on(VoiceConnectionStatus.Destroyed, async (oldState, newState) => {
             this.stop();
+            if (this.destroyCallback) this.destroyCallback();
         });
 
         this.voiceConnection.on(VoiceConnectionStatus.Connecting, async (oldState, newState) => {
@@ -122,7 +125,7 @@ export class MusicQueue {
 
     public skipTrack(count = 1): number {
         if (this.currentTrackIndex + count > this.queue.length) {
-            count = this.currentTrackIndex - this.queue.length;
+            count = this.queue.length - this.currentTrackIndex;
         }
         this.currentTrackIndex += count - 1;
         this.audioPlayer.stop(true);
@@ -143,13 +146,18 @@ export class MusicQueue {
         if (this.queueLock || this.audioPlayer.state.status !== AudioPlayerStatus.Idle || this.queue.length === 0) {
             return;
         }
-        this.queueLock = true;
+        console.log(`(MUSIC)[INFO] Processing queue`);
 
-        if (!this.queue[this.currentTrackIndex + 1]) return;
+        if (!this.queue[this.currentTrackIndex + 1]) {
+            console.log(`(MUSIC)[INFO] No next track, (${this.currentTrackIndex}/${this.queue.length - 1})`);
+            return;
+        }
+
+        this.queueLock = true;
         this.currentTrackIndex++;
         try {
-            const audioResource = await this.queue[this.currentTrackIndex].createAudioResource();
             this.textChannel.send(`Playing track ${this.queue[this.currentTrackIndex].name}`);
+            const audioResource = await this.queue[this.currentTrackIndex].createAudioResource();
             this.audioPlayer.play(audioResource);
             clearTimeout(this.disconnectTimeout);
             this.queueLock = false;
@@ -175,12 +183,20 @@ export class MusicQueue {
     }
 
     public getTracksList() {
-        if (this.queue.length === 0 && !this.queue[this.currentTrackIndex]) return 'No tracks enqueued';
-        let list = this.queue[this.currentTrackIndex] ? `**Now playing:**\n${this.queue[this.currentTrackIndex].name}\n` : '';
+        if ((this.queue.length === 0 || this.currentTrackIndex >= this.queue.length - 1) && (!this.queue[this.currentTrackIndex] || !this.readyLock)) return 'No tracks enqueued';
+        let list = '';
+        if (this.queue[this.currentTrackIndex] && this.readyLock) list += `**Now playing:**\n${this.queue[this.currentTrackIndex].name}\n`;
         list += '**Queue:**\n';
-        this.queue.slice(1, 16).forEach((track) => (list += `${track.name};\n`));
-        if (this.queue.length > 15) {
-            list += `...(and ${this.queue.length - 16} more tracks)`;
+        const slice = this.queue.slice(this.currentTrackIndex + 1);
+        let counter = 0;
+        for (const track of slice) {
+            if (counter > 14) break;
+            list += `${track.name};\n`;
+            counter++;
+        }
+
+        if (slice.length - counter > 0) {
+            list += `...(and ${slice.length - counter} more tracks)`;
         }
         return list;
     }
