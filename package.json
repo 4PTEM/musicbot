@@ -30,7 +30,7 @@
         "node-fetch": "^2.6.7",
         "sodium-native": "^3.4.1",
         "youtube-dl-exec": "^2.0.12",
-        "ytdl-core": "^4.11.0"
+        "ytdl-core": "^4.11.1"
     },
     "devDependencies": {
         "@types/node": "^17.0.36",
