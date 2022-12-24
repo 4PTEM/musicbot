@@ -1,27 +1,10 @@
-import { Client, Intents } from 'discord.js';
+import { Client, GatewayIntentBits } from 'discord.js';
 import 'dotenv/config';
 import { commands } from './commands';
 import { BOT_TOKEN } from './constants';
 import { Handler } from './handler';
 
-const client = new Client({ intents: [Intents.FLAGS.GUILD_MEMBERS, Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_VOICE_STATES, Intents.FLAGS.GUILD_MESSAGES] });
-
-setInterval(() => {
-    let totalMemoryUsage = 0;
-    for (let memoryForProcess of Object.values(process.memoryUsage())) {
-        totalMemoryUsage += memoryForProcess;
-    }
-    if (totalMemoryUsage / 1000000 > 1000) {
-        console.log(
-            ' !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n',
-            '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n',
-            '!!!!!!!!!!!!!!!!!!!!!!!!!!!EMERGENCY!!!!!!!!!!!!!!!!!!!!!!!!!!!\n',
-            '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n',
-            '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n'
-        );
-        console.log({ ...process.memoryUsage(), totalMemoryUsage: totalMemoryUsage / 1000000 + 'Mb' });
-    }
-}, 1000);
+const client = new Client({ intents: [GatewayIntentBits.GuildMembers, GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates, GatewayIntentBits.GuildMessages] });
 
 client.on('ready', async () => {
     if (!client.user) throw new Error('authentication error');
@@ -36,7 +19,7 @@ client.on('ready', async () => {
             console.log('Bad interaction');
             return;
         }
-        handler.handleCommand(interaction.commandName, interaction.options, interaction);
+        handler.handleCommand(interaction.commandName, interaction);
     });
 });
 

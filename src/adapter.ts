@@ -20,6 +20,7 @@ function getParamsString(params: Record<string, any>) {
 }
 
 export interface BasePlatformAdapter {
+    matchDomain(domain: string): boolean;
     parse(argsString: string): Promise<BaseTrack[]> | Track[];
 }
 
@@ -28,6 +29,10 @@ export class YandexAdapter implements BasePlatformAdapter {
     private albumRegex = /^https:\/\/music\.yandex\.ru\/album\/([^/]*)$/;
     private trackRegex = /^https:\/\/music\.yandex\.ru\/album\/([^/]*)\/track\/([0-9]*)$/;
     private lastVisit = Date.now() / 1000;
+
+    public matchDomain(domain: string): boolean {
+        return domain.startsWith('https://music.yandex.ru');
+    }
 
     public async parse(argsString: string): Promise<BaseTrack[]> {
         if (this.linkRegex.test(argsString)) {
@@ -106,6 +111,10 @@ export class YouTubeAdapter implements BasePlatformAdapter {
     private linkRegex = /^https:\/\/www\.youtube\.com\/watch\?.*v=[A-z0-9-_]*/;
     private playlistRegex = /^https:\/\/www\.youtube\.com\/(playlist|watch)\?.*list=[A-z0-9-_]*.*$/;
 
+    public matchDomain(domain: string): boolean {
+        return domain.startsWith('https://www.youtube.com');
+    }
+
     public async parse(argsString: string): Promise<BaseTrack[]> {
         if (this.playlistRegex.test(argsString)) {
             return await this.parsePlayList(argsString);
@@ -150,25 +159,22 @@ export class YouTubeAdapter implements BasePlatformAdapter {
     }
 }
 
-export class Adapter {
-    private adapters: Map<string, BasePlatformAdapter>;
-    public constructor(adapters: Map<string, BasePlatformAdapter>) {
-        this.adapters = adapters;
+export class AdapterManager {
+    private _adapters: BasePlatformAdapter[];
+    public constructor(adapters: BasePlatformAdapter[]) {
+        this._adapters = adapters;
     }
 
     public async parse(argsString: string): Promise<BaseTrack[]> {
-        if (argsString.startsWith('https://music.yandex.ru')) {
-            return await this.adapters.get('yandex')!.parse(argsString);
-        } else if (argsString.startsWith('https://www.youtube.com')) {
-            return await this.adapters.get('youtube')!.parse(argsString);
+        for (const adapter of this._adapters) {
+            if(adapter.matchDomain(argsString)) {
+                return await adapter.parse(argsString);
+            }
         }
         const searchedTrack = await youTubeParser.searchVideo(argsString);
-        if(!searchedTrack) return [];
+        if (!searchedTrack) return [];
         return [new YoutubeTrack(`https://www.youtube.com/watch?v=${searchedTrack.id.videoId}`, searchedTrack.snippet.title)];
     }
 }
 
-export const adapters = new Map<string, BasePlatformAdapter>([
-    ['yandex', new YandexAdapter()],
-    ['youtube', new YouTubeAdapter()],
-]);
+export const adapter = new AdapterManager([new YandexAdapter(), new YouTubeAdapter()]);

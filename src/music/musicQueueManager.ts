@@ -1,6 +1,6 @@
 import { MusicQueue } from './musicQueue';
 
-export class MusicQueueManager {
+class MusicQueueManager {
     private queues: Map<string, MusicQueue>;
 
     public constructor() {
@@ -19,3 +19,5 @@ export class MusicQueueManager {
         return queue;
     }
 }
+
+export const musicQueueManager = new MusicQueueManager();
