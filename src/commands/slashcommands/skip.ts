@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, SlashCommandNumberOption, SlashCommandStringOption } from 'discord.js';
+import { SlashCommandBuilder, SlashCommandNumberOption } from 'discord.js';
 import { musicQueueManager } from '../../music/musicQueueManager';
 import { Command } from '../types';
 

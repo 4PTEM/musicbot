@@ -6,7 +6,7 @@ import { Handler } from './handler';
 
 const client = new Client({ intents: [GatewayIntentBits.GuildMembers, GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates, GatewayIntentBits.GuildMessages] });
 
-client.on('ready', async () => {
+client.on('ready', async (client) => {
     if (!client.user) throw new Error('authentication error');
     console.log(`Logged in as ${client.user.tag}!`);
     const handler = new Handler(client);

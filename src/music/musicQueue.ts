@@ -146,7 +146,7 @@ export class MusicQueue {
         if (this.queueLock || this.audioPlayer.state.status !== AudioPlayerStatus.Idle || this.queue.length === 0) {
             return;
         }
-        console.log(`(MUSIC)[INFO] Processing queue`);
+        console.log('(MUSIC)[INFO] Processing queue');
 
         if (!this.queue[this.currentTrackIndex + 1]) {
             console.log(`(MUSIC)[INFO] No next track, (${this.currentTrackIndex}/${this.queue.length - 1})`);
