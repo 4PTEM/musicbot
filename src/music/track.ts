@@ -1,5 +1,6 @@
 import { AudioResource, createAudioResource } from '@discordjs/voice';
-import ytdl from 'ytdl-core';
+import ytdl from 'ytdl-core-discord';
+import play from 'play-dl';
 import { youTubeParser } from '../youtubeDataAPI/ytParser';
 
 export interface BaseTrack {
@@ -7,7 +8,6 @@ export interface BaseTrack {
     link?: string;
     createAudioResource(start?: number): Promise<AudioResource>;
 }
-
 export class Track implements BaseTrack {
     public name: string;
     public link?: string;
@@ -18,11 +18,10 @@ export class Track implements BaseTrack {
 
     public async createAudioResource(): Promise<AudioResource> {
         this.link = (await youTubeParser.searchVideo(this.name)).id.videoId;
-        const audioStream = ytdl(this.link, {
-            quality: 'highestaudio',
-            filter: 'audioonly',
-        });
-        return createAudioResource(audioStream);
+        const { stream: audioStream, type } = await play.stream(this.link);
+        audioStream.on('error', (err) => console.log(`(TRACK)[ERROR] Stream error ${err.message}`));
+        audioStream.on('close', () => console.log('(TRACK)[ERROR] Stream closed'));
+        return createAudioResource(audioStream, { inputType: type });
     }
 }
 
@@ -36,10 +35,9 @@ export class YoutubeTrack {
     }
 
     public async createAudioResource(): Promise<AudioResource> {
-        const audioStream = ytdl(this.link, {
-            quality: 'highestaudio',
-            filter: 'audioonly',
-        });
-        return createAudioResource(audioStream);
+        const { stream: audioStream, type } = await play.stream(this.link);
+        audioStream.on('error', (err) => console.log(`(TRACK)[ERROR] Stream error ${err.message}`));
+        audioStream.on('close', () => console.log('(TRACK)[ERROR] Stream closed'));
+        return createAudioResource(audioStream, { inputType: type });
     }
 }
