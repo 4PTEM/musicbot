@@ -70,7 +70,8 @@ export class YandexAdapter implements BasePlatformAdapter {
         let params = { owner, kinds: playlistId };
         let paramsString = getParamsString(params);
         paramsString += '&light=true&madeFor=&withLikesCount=true&forceLogin=true&lang=ru&external-domain=music.yandex.ru&overembed=false&ncrnd=0.4617229546606778';
-        let tracks = (await (await this.request(`https://music.yandex.ru/handlers/playlist.jsx${paramsString}`)).json()).playlist.tracks as yandexTrack[];
+        let res = (await (await this.request(`https://music.yandex.ru/handlers/playlist.jsx${paramsString}`)).json())
+        let tracks = res.playlist.tracks as yandexTrack[];
         return this.getTracksFromYandexTracks(tracks);
     }
 
@@ -167,7 +168,7 @@ export class AdapterManager {
 
     public async parse(argsString: string): Promise<BaseTrack[]> {
         for (const adapter of this._adapters) {
-            if(adapter.matchDomain(argsString)) {
+            if (adapter.matchDomain(argsString)) {
                 return await adapter.parse(argsString);
             }
         }
