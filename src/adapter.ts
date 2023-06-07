@@ -35,65 +35,75 @@ export class YandexAdapter implements BasePlatformAdapter {
     }
 
     public async parse(argsString: string): Promise<BaseTrack[]> {
-        if (this.linkRegex.test(argsString)) {
-            const match = [...argsString.match(this.linkRegex)!];
-            const owner = match[1];
-            const playlist_id = match[2];
-            return await this.parsePlaylist(owner, playlist_id);
-        } else if (this.albumRegex.test(argsString)) {
-            const match = [...argsString.match(this.albumRegex)!];
-            const albumId = match[1];
-            return await this.parseAlbum(albumId);
-        } else if (this.trackRegex.test(argsString)) {
-            const match = [...argsString.match(this.trackRegex)!];
-            const [, albumId, trackId] = match;
-            return await this.parseTrack(albumId, trackId);
+        try {
+            if (this.linkRegex.test(argsString)) {
+                const match = [...argsString.match(this.linkRegex)!];
+                const owner = match[1];
+                const playlist_id = match[2];
+                return await this.parsePlaylist(owner, playlist_id);
+            } else if (this.albumRegex.test(argsString)) {
+                const match = [...argsString.match(this.albumRegex)!];
+                const albumId = match[1];
+                return await this.parseAlbum(albumId);
+            } else if (this.trackRegex.test(argsString)) {
+                const match = [...argsString.match(this.trackRegex)!];
+                const [, albumId, trackId] = match;
+                return await this.parseTrack(albumId, trackId);
+            }
+            return [];
+        } catch (error) {
+            console.log(`(ADAPTER)[ERROR] Yandex parser error: ${error}`);
+            return [];
         }
-        return [];
     }
 
     private async parseAlbum(albumId: string): Promise<BaseTrack[]> {
         let paramsString = `?album=${albumId}`;
-        paramsString += '&lang=ru&external-domain=music.yandex.ru&overembed=false&ncrnd=0.38299750155576406';
-        const tracks = (await (await this.request(`https://music.yandex.ru/handlers/album.jsx${paramsString}`)).json()).volumes[0] as yandexTrack[];
+        paramsString += '&lang=en&external-domain=music.yandex.ru&overembed=false&ncrnd=0.38299750155576406';
+        const res = await (await this.request(`https://music.yandex.ru/handlers/album.jsx${paramsString}`)).json();
+        const tracks = res.volumes[0] as yandexTrack[];
+        if (!tracks) {
+            this.handleUnexpectedResponse(res);
+        }
         return this.getTracksFromYandexTracks(tracks);
     }
 
     private async parseTrack(albumId: string, trackId: string): Promise<BaseTrack[]> {
         let paramsString = `?album=${albumId}`;
-        paramsString += '&lang=ru&external-domain=music.yandex.ru&overembed=false&ncrnd=0.38299750155576406';
-        const tracks = (await (await this.request(`https://music.yandex.ru/handlers/album.jsx${paramsString}`)).json()).volumes[0] as yandexTrack[];
+        paramsString += '&lang=en&external-domain=music.yandex.ru&overembed=false&ncrnd=0.38299750155576406';
+        const res = await (await this.request(`https://music.yandex.ru/handlers/album.jsx${paramsString}`)).json();
+        const tracks = res.volumes[0] as yandexTrack[];
+        if (!tracks) {
+            this.handleUnexpectedResponse(res);
+        }
         return this.getTracksFromYandexTracks([tracks.find((track) => track.realId == trackId)!]);
     }
 
     private async parsePlaylist(owner: string, playlistId: string): Promise<BaseTrack[]> {
-        let params = { owner, kinds: playlistId };
-        let paramsString = getParamsString(params);
-        paramsString += '&light=true&madeFor=&withLikesCount=true&forceLogin=true&lang=ru&external-domain=music.yandex.ru&overembed=false&ncrnd=0.4617229546606778';
-        let res = (await (await this.request(`https://music.yandex.ru/handlers/playlist.jsx${paramsString}`)).json())
-        let tracks = res.playlist.tracks as yandexTrack[];
+        let paramsString = getParamsString({ owner, kinds: playlistId });
+        paramsString += '&light=true&madeFor=&withLikesCount=true&forceLogin=true&lang=en&external-domain=music.yandex.ru&overembed=false&ncrnd=0.4617229546606778';
+        const res = await (await this.request(`https://music.yandex.ru/handlers/playlist.jsx${paramsString}`)).json();
+        const tracks = res.playlist?.tracks as yandexTrack[];
+        if (!tracks) {
+            this.handleUnexpectedResponse(res);
+        }
         return this.getTracksFromYandexTracks(tracks);
     }
 
     private request(url: string): Promise<Response> {
         const response = fetch(url, {
             headers: {
-                Accept: 'application / json, text/ javascript, */*; q=0.01',
-                'Accept-Encoding': 'gzip, deflate, br',
-                Connection: 'keep-alive',
-                Cookie: `${YANDEX_COOKIE || ''} active-browser-timestamp=${this.lastVisit};`,
                 Host: 'music.yandex.ru',
+                'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/113.0',
+                Accept: '*/*',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Accept-Encoding': 'gzip, deflate, br',
                 Referer: 'https://music.yandex.ru/users/kukaraches48/playlists/3',
-                'Sec-Fetch-Dest': 'empty',
-                'Sec-Fetch-Mode': 'cors',
+                Connection: 'keep-alive',
+                Cookie: '_yasc=Pz9TRw+kH26+1flOHr2yp8NRULa36x3TTHFq5ZEifYjIgkgwcvqaHxL94I29PV2xXw==; i=Ccab9siLEa20B695j8jXScu4JS5SUTARn3+duPvsOYuyXclr9/ER/V6AkbdeLbdb5mBBPF7NPkznoGdedOKL+HW7QNc=; yandexuid=8645125671685711840; yuidss=8645125671685711840; ymex=2001071844.yrts.1685711844; gdpr=0; _ym_uid=1685711844205607318; _ym_d=1685711845; is_gdpr=0; is_gdpr_b=CPOxcxDwugE=; Session_id=3:1685971176.5.0.1685711863404:YiBeVQ:87.1.2:1|693274689.0.2.3:1685711863|3:10270897.554815.zJeceCTrD_JMHSxVxeRX3Ny93Ws; sessar=1.99.CiASpIr-Ap-bKuI6yC8Ed0wjA_hC8txTnueBdphY9bHiMQ.ohP8WawWymY3y3S1Wz7hqGfFas3bXhrJgFjPTaxrodc; sessionid2=3:1685971176.5.0.1685711863404:YiBeVQ:87.1.2:1|693274689.0.2.3:1685711863|3:10270897.554815.fakesign0000000000000000000; yp=2001071863.udn.cDrQkNGA0YLRkdC8INCX0LXQudC90LDQu9C%2B0LI%3D; L=aGMHWFB9fwdZX3RbY0JHRANSQlcLRVtVIT8cNgUTBB8WRVwP.1685711863.15361.399498.8ee328efbb940392d81cb5ee8c68882f; yandex_login=kukaraches48; lastVisitedPage=%7B%22693274689%22%3A%22%2Fusers%2Fkukaraches48%2Fplaylists%2F3%22%7D; spravka=dD0xNjg2MDk5MzMxO2k9ODUuOTQuMzIuOTg7RD01MzU2QTM0MTAwQTAzRDQwMUFBQTYxNkU2Q0RBRDNFNzIzMTBDRERDOEUwMzJFQjE4ODcyNjZFMEJFNzcyQ0RFODlCQ0JFQzc2QzUwNDM2RjYyQzg3NzEzOUEwRTY0NzhCQjIxMjVEODdBOUE3QTJCQkZFREM2OEM5OTU3RTVFMDg1O3U9MTY4NjA5OTMzMTkyNzkxMDE3ODtoPTNkN2M4NmFmN2FiYTBjZWQzMzQ0NThlYzAxNzUyMjgz; _ym_isad=2; device_id=a4825c49740042035c0a259a1193fa931bdef2771; active-browser-timestamp=1686099333563; _ym_visorc=b',
+                'Sec-Fetch-Dest': 'script',
+                'Sec-Fetch-Mode': 'no-cors',
                 'Sec-Fetch-Site': 'same-origin',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.64 Safari/537.36 OPR/87.0.4390.25',
-                'X-Current-UID': '693274689',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-Retpath-Y': 'https://music.yandex.ru/users/kukaraches48/playlists/3',
-                'sec-ch-ua': '" Not A;Brand";v="99", "Chromium";v="101", "Opera";v="87"',
-                'sec-ch-ua-mobile': '?0',
-                'sec-ch-ua-platform': '"Windows"',
             },
         });
         this.lastVisit = Date.now() / 1000;
@@ -105,6 +115,13 @@ export class YandexAdapter implements BasePlatformAdapter {
             let author = track.artists.map((artist) => artist.name).join(', ');
             return new Track(author + ' - ' + track.title);
         });
+    }
+
+    private handleUnexpectedResponse(response: any) {
+        console.log(`(HANDLER)[WARNING] Yandex parser cant parse tracks. response: ${JSON.stringify(response)}`);
+        if (response.type == 'captcha' && response.captcha?.['captcha-page'] && response.captcha?.['img-url']) {
+            console.log(`(HANDLER)[INFO] Yandex parser got capthca. Captcha page url: ${response.captcha['captcha-page']}`);
+        }
     }
 }
 
