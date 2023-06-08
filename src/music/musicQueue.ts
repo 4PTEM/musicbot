@@ -34,7 +34,6 @@ export class MusicQueue {
         this.textChannel = textChannel;
         this.audioPlayer = createAudioPlayer({ behaviors: { noSubscriber: NoSubscriberBehavior.Pause, maxMissedFrames: Infinity } });
         const guild = this.voiceChannel.guild;
-        //@ts-ignore
         this.voiceConnection = joinVoiceChannel({ channelId: this.voiceChannel.id, guildId: guild.id, adapterCreator: guild.voiceAdapterCreator });
 
         this.voiceConnection.on(VoiceConnectionStatus.Disconnected, async (oldState, newState) => {

@@ -14,6 +14,7 @@ class MusicQueueManager {
     public set(key: string, queue: MusicQueue): MusicQueue {
         queue.setDestroyCallback(() => {
             this.queues.delete(key);
+            console.log(`(MUSIC)[INFO] Musci queue ${key} deleted`);
         });
         this.queues.set(key, queue);
         return queue;
