@@ -35,7 +35,11 @@ export class Handler {
             return;
         }
         this.queue.schedule(async () => {
-            command.execute(interaction);
+            try {
+                command.execute(interaction);
+            } catch (e) {
+                console.log(`Error on interaction handling, ${e}`);
+            }
         });
     }
 }

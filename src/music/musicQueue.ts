@@ -37,51 +37,16 @@ export class MusicQueue {
         this.voiceConnection = joinVoiceChannel({ channelId: this.voiceChannel.id, guildId: guild.id, adapterCreator: guild.voiceAdapterCreator });
 
         this.voiceConnection.on(VoiceConnectionStatus.Disconnected, async (oldState, newState) => {
-            if (newState.reason === VoiceConnectionDisconnectReason.WebSocketClose && newState.closeCode === 4014) {
-                try {
-                    await entersState(this.voiceConnection, VoiceConnectionStatus.Connecting, 5_000);
-                } catch {
-                    this.voiceConnection.destroy();
-                    if (this.destroyCallback) this.destroyCallback();
-                }
-            } else if (this.voiceConnection.rejoinAttempts < 5) {
-                await wait((this.voiceConnection.rejoinAttempts + 1) * 5_000);
-                this.voiceConnection.rejoin();
-            } else {
+            try {
+                await Promise.race([entersState(this.voiceConnection, VoiceConnectionStatus.Signalling, 5_000), entersState(this.voiceConnection, VoiceConnectionStatus.Connecting, 5_000)]);
+            } catch (e) {
                 this.voiceConnection.destroy();
-                if (this.destroyCallback) this.destroyCallback();
             }
         });
 
         this.voiceConnection.on(VoiceConnectionStatus.Destroyed, async (oldState, newState) => {
             this.stop();
             if (this.destroyCallback) this.destroyCallback();
-        });
-
-        this.voiceConnection.on(VoiceConnectionStatus.Connecting, async (oldState, newState) => {
-            if (!this.readyLock) {
-                this.readyLock = true;
-                try {
-                    await entersState(this.voiceConnection, VoiceConnectionStatus.Ready, 20_000);
-                } catch (error: any) {
-                    if (this.voiceConnection.state.status !== VoiceConnectionStatus.Destroyed) this.voiceConnection.destroy();
-                } finally {
-                    this.readyLock = false;
-                }
-            }
-        });
-
-        this.voiceConnection.on(VoiceConnectionStatus.Signalling, async (oldState, newState) => {
-            if (!this.readyLock) {
-                this.readyLock = true;
-                try {
-                    await entersState(this.voiceConnection, VoiceConnectionStatus.Ready, 20_000);
-                } catch (error: any) {
-                    if (this.voiceConnection.state.status !== VoiceConnectionStatus.Destroyed) this.voiceConnection.destroy();
-                } finally {
-                    this.readyLock = false;
-                }
-            }
         });
 
         this.audioPlayer.on('error', async (error) => {

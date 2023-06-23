@@ -17,7 +17,7 @@ export class Track implements BaseTrack {
 
     public async createAudioResource(): Promise<AudioResource> {
         this.link = (await youTubeParser.searchVideo(this.name)).id.videoId;
-        const { stream: audioStream, type } = await play.stream(this.link);
+        const { stream: audioStream, type } = await play.stream(this.link, { discordPlayerCompatibility: true });
         return createAudioResource(audioStream, { inputType: type });
     }
 }
@@ -32,7 +32,7 @@ export class YoutubeTrack {
     }
 
     public async createAudioResource(): Promise<AudioResource> {
-        const { stream: audioStream, type } = await play.stream(this.link);
+        const { stream: audioStream, type } = await play.stream(this.link, { discordPlayerCompatibility: true });
         return createAudioResource(audioStream, { inputType: type });
     }
 }
